@@ -116,7 +116,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#4aa3f2;font-family:'M
 .sharebox{background:#f4f7fc;border-radius:12px;padding:12px;text-align:left;font-size:14px;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;user-select:text;-webkit-user-select:text}
 .slinks{display:flex;gap:10px;margin-top:10px}
 .slinks a{flex:1;text-decoration:none;text-align:center}
-.btn.x-tw{background:#0f172a;color:#fff}.btn.line{background:#06c755;color:#fff}
+.btn.x-tw{background:#0f172a;color:#fff}
+.btn.x-post{background:#0f172a;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center}.btn.line{background:#06c755;color:#fff}
 #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:99px;font-weight:800;font-size:14px;z-index:30;opacity:0;transition:opacity .25s;pointer-events:none}
 #toast.on{opacity:1}
 @media (max-width:560px){
@@ -173,7 +174,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#4aa3f2;font-family:'M
     </div>
     <div class="note" id="rNote"></div>
     <button class="btn primary" id="bRetry">もう一度とぶ</button>
-    <div class="row2"><button class="btn" id="bShare">友達に共有</button><button class="btn" id="bRank2">ランキング</button></div>
+    <div class="row2"><a class="btn x-post" id="bXpost" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener">Xでポスト</a><button class="btn" id="bShare">友達に共有</button><button class="btn" id="bRank2">ランキング</button></div>
     <div class="hint">画面のどこかをタップしても再挑戦できます</div>
   </div>
 </div>
@@ -1412,6 +1413,7 @@ function showResult(){
   $('result').classList.remove('hidden');
   if(laps > 0 || perfect){ launchConfetti(laps > 0 ? 220 : 140); SFX.fanfare(); }
   else if(isNew) SFX.fanfare();
+  const sx = shareText(); $('bXpost').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(sx.text) + '&url=' + encodeURIComponent(sx.url);   // Xへワンタップ投稿
   if(total > 0) submitScore({ distance: total, grade: run.grade, place: run.summary, err: miss ? null : Math.round(run.err) });
 }
 function shareText(){
