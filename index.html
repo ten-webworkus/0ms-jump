@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="description" content="富士山から時速1万kmで滑って、踏切はワンタップ。誤差0msなら世界一周して、そのまま2周目へ。記録は無限大。ブラウザで無料プレイ。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="0ms ジャンプ">
+<meta property="og:title" content="0ms ジャンプ｜富士山から、誤差0msで世界一周">
+<meta property="og:description" content="時速1万kmで滑って、踏切はワンタップ。0msなら世界一周して、そのまま2周目へ。キミは0msで押せる？">
+<meta property="og:url" content="https://ten-webworkus.github.io/0ms-jump/">
+<meta property="og:image" content="https://ten-webworkus.github.io/0ms-jump/og.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="0ms ジャンプ｜富士山から、誤差0msで世界一周">
+<meta name="twitter:description" content="時速1万kmで滑って、踏切はワンタップ。0msなら世界一周して、そのまま2周目へ。">
+<meta name="twitter:image" content="https://ten-webworkus.github.io/0ms-jump/og.jpg">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>0ms ジャンプ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&family=Rubik:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0f1e4a;--blue:#1d4ed8;--yellow:#ffd21f;--red:#ef4444}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#4aa3f2;font-family:'M PLUS Rounded 1c',system-ui,sans-serif;color:var(--navy);user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer}
+.hud{position:fixed;pointer-events:none;z-index:5}
+.box{background:rgba(255,255,255,.93);border-radius:18px;padding:8px 16px 7px;box-shadow:0 4px 16px rgba(15,30,74,.16)}
+.lbl{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:13px;letter-spacing:.05em}
+.val{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:36px;line-height:1.05;white-space:nowrap}
+.val small{font-size:.55em;margin-left:4px}
+.lapv{color:#ef4444;margin-left:6px}
+.spd{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:14px;color:#ef4444;margin-top:2px}
+#distBox{top:12px;left:12px;min-width:140px}
+#toBox{top:12px;right:12px;min-width:120px}
+#toBox .val{color:var(--blue)}
+#judge{top:max(96px,13%);left:0;right:0;text-align:center;transition:opacity .4s}
+#judgeTxt{display:inline-block;position:relative;font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:clamp(44px,10vw,100px);line-height:1;color:var(--yellow);-webkit-text-stroke:7px var(--navy);paint-order:stroke fill;text-shadow:0 7px 0 rgba(15,30,74,.3);opacity:0;transform:scale(.4) rotate(-4deg)}
+#judgeTxt.show{animation:pop .55s cubic-bezier(.2,1.7,.4,1) forwards}
+#judgeTxt.great{color:#5eead4}
+#judgeTxt.good{color:#a3e635}
+#judgeTxt.miss{color:#e2e8f0}
+#judgeTxt.small{font-size:clamp(30px,6vw,56px)}
+#judgeSub{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:18px;color:#fff;-webkit-text-stroke:4px var(--navy);paint-order:stroke fill;margin-top:6px;opacity:0}
+#judgeSub.show{animation:fadeUp .4s .15s ease-out forwards}
+#rays{position:absolute;left:50%;top:50%;width:170%;height:260%;transform:translate(-50%,-50%);pointer-events:none;opacity:0}
+#judgeTxt.perfect #rays{animation:rays 1.4s ease-out forwards}
+@keyframes pop{0%{opacity:0;transform:scale(.4) rotate(-6deg)}100%{opacity:1;transform:scale(1) rotate(-4deg)}}
+@keyframes fadeUp{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+@keyframes rays{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}25%{opacity:1}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+#guide{left:0;right:0;bottom:9%;text-align:center;opacity:0;transition:opacity .2s}
+#guide.on{opacity:1}
+/* タップ案内：手の絵文字の代わりに、押した場所から輪が広がる「波紋」 */
+#guide .tapfx{position:relative;display:block;width:96px;height:96px;margin:0 auto 6px}
+#guide .tapfx b{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#ffd21f;border:5px solid var(--navy);box-shadow:0 4px 0 rgba(15,30,74,.3);animation:tapPress 1s ease-in-out infinite}
+#guide .tapfx i{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:6px solid #ffd21f;box-shadow:0 0 0 3px #0f1e4a,inset 0 0 0 3px #0f1e4a;opacity:0;animation:tapRing 1s ease-out infinite}
+#guide .tapfx i:nth-child(2){animation-delay:.18s}
+@keyframes tapPress{0%,100%{transform:scale(1)}12%{transform:scale(.72)}30%{transform:scale(1.08)}45%{transform:scale(1)}}
+@keyframes tapRing{0%,10%{opacity:0;transform:scale(.6)}14%{opacity:1}100%{opacity:0;transform:scale(2.8)}}
+#guide .t{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:clamp(26px,5vw,40px);color:var(--navy);-webkit-text-stroke:5px #fff;paint-order:stroke fill}
+@keyframes tap{0%,100%{transform:translateY(0)}50%{transform:translateY(8px) scale(.94)}}
+.rbtn{position:fixed;bottom:14px;z-index:6;width:50px;height:50px;border-radius:50%;border:0;background:rgba(255,255,255,.93);box-shadow:0 4px 14px rgba(15,30,74,.18);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--navy)}
+#btnSound{left:14px}
+#btnBgm{left:72px}
+#btnBgm.off{opacity:.4}
+#btnBgm.off::after{content:"";position:absolute;width:30px;height:3px;background:#ef4444;transform:rotate(-45deg);border-radius:2px}
+#btnRank{right:14px}
+.layer{position:fixed;inset:0;z-index:8;pointer-events:none;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.hidden{display:none!important}
+#title .logo{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:clamp(84px,24vw,170px);line-height:.95;text-align:center;color:var(--yellow);-webkit-text-stroke:8px var(--navy);paint-order:stroke fill;text-shadow:0 8px 0 rgba(15,30,74,.3);transform:rotate(-4deg)}
+#title .logo span{display:block;color:#fff;font-family:'M PLUS Rounded 1c','Noto Sans CJK JP',sans-serif;font-style:normal;font-weight:800;font-size:.62em;margin-top:.08em}
+#title .sub{margin-top:18px;background:rgba(255,255,255,.92);border-radius:16px;padding:10px 16px;font-size:14px;max-width:min(88vw,420px);text-align:center;line-height:1.6;box-shadow:0 4px 16px rgba(15,30,74,.15)}
+#title .sub b{color:var(--red)}
+#title .go{margin-top:18px;font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:clamp(26px,5vw,40px);color:var(--navy);-webkit-text-stroke:5px #fff;paint-order:stroke fill;animation:blink 1.1s ease-in-out infinite}
+#title .best{margin-top:8px;font-weight:800;font-size:14px;color:#fff;-webkit-text-stroke:3px var(--navy);paint-order:stroke fill}
+@keyframes blink{50%{opacity:.35}}
+.card{pointer-events:auto;background:#fff;border-radius:24px;padding:18px 20px 16px;width:min(92vw,380px);box-shadow:0 12px 40px rgba(15,30,74,.3);text-align:center;touch-action:manipulation}
+#result .card{animation:cardIn .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes cardIn{0%{opacity:0;transform:translateY(30px) scale(.9)}100%{opacity:1;transform:none}}
+.grade{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:40px;line-height:1.1;color:var(--yellow);-webkit-text-stroke:6px var(--navy);paint-order:stroke fill}
+.grade.great{color:#2dd4bf}.grade.good{color:#84cc16}.grade.miss{color:#cbd5e1}
+.rdist{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:58px;line-height:1.05;margin-top:2px}
+.rdist small{font-size:26px}
+.rdist.none{font-size:30px;color:#64748b;font-family:'M PLUS Rounded 1c',sans-serif;font-style:normal;padding:10px 0}
+.badge{display:inline-block;background:var(--red);color:#fff;font-family:Rubik,sans-serif;font-style:italic;font-weight:800;padding:3px 12px;border-radius:99px;font-size:14px;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.rows{margin:12px 0 8px;border-top:2px solid #eef2f8}
+.rows div{display:flex;justify-content:space-between;padding:7px 4px;border-bottom:2px solid #eef2f8;font-size:15px}
+.rows b{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:17px}
+.note{font-size:12px;color:#64748b;min-height:16px;margin-bottom:8px}
+.btn{font-family:inherit;font-weight:800;font-size:16px;border:0;border-radius:14px;padding:12px 14px;cursor:pointer;background:#e8eefb;color:var(--navy);width:100%}
+.btn.primary{background:var(--blue);color:#fff;font-size:18px;box-shadow:0 4px 0 #1e3a8a}
+.btn:active{transform:translateY(2px)}
+.row2{display:flex;gap:10px;margin-top:10px}
+.hint{font-size:12px;color:#94a3b8;margin-top:10px}
+.modal{position:fixed;inset:0;z-index:20;background:rgba(15,30,74,.5);display:flex;align-items:center;justify-content:center;pointer-events:auto}
+.mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mhead h2{margin:0;font-size:20px}
+.x{border:0;background:#eef2f8;border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;color:var(--navy)}
+.namerow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.namerow label{font-size:12px;white-space:nowrap;color:#475569}
+.namerow input{flex:1;min-width:0;font-family:inherit;font-weight:700;font-size:16px;padding:8px 10px;border:2px solid #dbe4f3;border-radius:10px;color:var(--navy);user-select:text;-webkit-user-select:text}
+.btn.sm{width:auto;padding:9px 14px;font-size:14px}
+.status{font-size:12px;color:#64748b;min-height:16px;margin-bottom:6px}
+.rlist{list-style:none;margin:0;padding:0;max-height:52vh;overflow-y:auto;touch-action:pan-y;text-align:left}
+.rlist li{display:grid;grid-template-columns:38px 1fr auto auto;gap:8px;align-items:center;padding:8px 6px;border-bottom:2px solid #f1f5fb}
+.rlist li.me{background:#fff7cc;border-radius:10px}
+.rlist .rk{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:18px;text-align:center}
+.rlist li:nth-child(1) .rk{color:#d4a106}.rlist li:nth-child(2) .rk{color:#94a3b8}.rlist li:nth-child(3) .rk{color:#c2733a}
+.rlist .nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rlist .gd{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:11px;padding:2px 7px;border-radius:99px;background:#e2e8f0}
+.gd.PERFECT{background:var(--yellow)}.gd.GREAT{background:#99f6e4}.gd.GOOD{background:#d9f99d}
+.rlist .ds{font-family:Rubik,sans-serif;font-style:italic;font-weight:800;font-size:17px;text-align:right;min-width:74px}
+.sharebox{background:#f4f7fc;border-radius:12px;padding:12px;text-align:left;font-size:14px;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;user-select:text;-webkit-user-select:text}
+.slinks{display:flex;gap:10px;margin-top:10px}
+.slinks a{flex:1;text-decoration:none;text-align:center}
+.btn.x-tw{background:#0f172a;color:#fff}.btn.line{background:#06c755;color:#fff}
+#toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:99px;font-weight:800;font-size:14px;z-index:30;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.on{opacity:1}
+@media (max-width:560px){
+ .val{font-size:26px}.lbl{font-size:11px}
+ #distBox{min-width:108px;padding:6px 12px 5px}#toBox{min-width:96px;padding:6px 12px 5px}
+ .rdist{font-size:48px}
+}
+.hud-restart{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:7;border:0;border-radius:99px;background:rgba(15,30,74,.85);color:#fff;font-family:inherit;font-weight:800;font-size:15px;padding:10px 16px;box-shadow:0 4px 14px rgba(15,30,74,.25);cursor:pointer;white-space:nowrap;touch-action:manipulation}
+.hud-restart:active{transform:translateX(-50%) scale(.95)}
+@media (max-width:560px){.hud-restart{top:84px;font-size:14px;padding:9px 14px}#judge{top:136px}}
+#region{left:0;right:0;bottom:84px;text-align:center;opacity:0;transition:opacity .25s}
+#region.on{opacity:1}
+#regionTxt{display:inline-block;background:rgba(15,30,74,.82);color:#fff;font-weight:800;font-size:clamp(15px,3.6vw,20px);padding:8px 18px;border-radius:99px;box-shadow:0 4px 14px rgba(15,30,74,.25)}
+#title .tag{margin-top:14px;font-weight:800;font-size:clamp(16px,3.8vw,22px);color:#fff;-webkit-text-stroke:4px var(--navy);paint-order:stroke fill}
+.rplace{font-weight:800;font-size:15px;color:#334155;margin-top:4px}
+.grade.world{color:#ffd21f;font-size:34px}
+.rlist .pl{grid-column:2 / 5;font-size:11px;color:#64748b;margin-top:-4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rlist li{grid-template-columns:38px 1fr auto auto}
+.rlist .ds{min-width:96px}
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="スキージャンプのゲーム画面"></canvas>
+
+<div class="hud box" id="distBox"><div class="lbl">DISTANCE <span id="lapVal" class="lapv"></span></div><div class="val"><span id="distVal">0</span><small id="distUnit">m</small></div><div class="spd"><span id="spdVal">0</span> km/h</div></div>
+<div class="hud box" id="toBox"><div class="lbl">TAKEOFF</div><div class="val" id="toVal">--</div></div>
+<div class="hud" id="judge"><div id="judgeTxt"><svg id="rays" viewBox="-100 -100 200 200" aria-hidden="true"><g stroke="#ffe066" stroke-width="7" stroke-linecap="round" opacity=".95"><line x1="-62" y1="-30" x2="-80" y2="-44"/><line x1="-66" y1="2" x2="-90" y2="2"/><line x1="-60" y1="32" x2="-78" y2="46"/><line x1="62" y1="-30" x2="80" y2="-44"/><line x1="66" y1="2" x2="90" y2="2"/><line x1="60" y1="32" x2="78" y2="46"/><line x1="-40" y1="-48" x2="-48" y2="-68"/><line x1="40" y1="-48" x2="48" y2="-68"/></g></svg><span id="judgeWord"></span></div><div id="judgeSub"></div></div>
+<div class="hud" id="region"><span id="regionTxt"></span></div>
+<div class="hud" id="guide"><span class="tapfx" aria-hidden="true"><i></i><i></i><b></b></span><span class="t" id="guideTxt">TAP TO JUMP</span></div>
+
+<button class="hud-restart hidden" id="btnRestart" aria-label="スタートに戻る">↺ スタートに戻る</button>
+<button class="rbtn" id="btnSound" aria-label="効果音の切替">🔊</button>
+<button class="rbtn" id="btnBgm" aria-label="BGMの切替">🎵</button>
+<button class="rbtn" id="btnRank" aria-label="世界ランキング">🏆</button>
+
+<div class="layer" id="title">
+  <div class="logo">0ms<span>ジャンプ</span></div>
+  <div class="tag">富士山から、東まわりで世界一周。</div>
+  <div class="sub">富士山頂から<b>時速1万km超</b>で滑走し、<b>赤い踏切ポイント</b>へ。<br>ぴったりのタイミングでタップ！<br>誤差<b>0ms</b>なら世界一周して富士山へ。<br>そのまま<b>次の周</b>へ突入！記録は無限大。</div>
+  <div class="go">TAP TO START</div>
+  <div class="best" id="titleBest"></div>
+</div>
+
+<div class="layer hidden" id="result">
+  <div class="card" id="resultCard">
+    <div class="grade" id="rGrade">PERFECT!</div>
+    <div class="rplace" id="rPlace"></div>
+    <div class="rdist" id="rDistWrap"><span id="rDist">0.0</span><small> km</small></div>
+    <div id="rNew" class="badge hidden">NEW RECORD!</div>
+    <div class="rows">
+      <div><span>踏切タイミングの誤差</span><b id="rErr">--</b></div>
+      <div><span>自己ベスト</span><b id="rBest">--</b></div>
+      <div><span>世界ランキング</span><b id="rRank">--</b></div>
+    </div>
+    <div class="note" id="rNote"></div>
+    <button class="btn primary" id="bRetry">もう一度とぶ</button>
+    <div class="row2"><button class="btn" id="bShare">友達に共有</button><button class="btn" id="bRank2">ランキング</button></div>
+    <div class="hint">画面のどこかをタップしても再挑戦できます</div>
+  </div>
+</div>
+
+<div class="modal hidden" id="rankModal">
+  <div class="card">
+    <div class="mhead"><h2>🏆 世界ランキング</h2><button class="x" data-close="rankModal" aria-label="閉じる">✕</button></div>
+    <div class="namerow"><label for="nameIn">プレイヤー名</label><input id="nameIn" maxlength="12" autocomplete="off"><button class="btn sm" id="nameSave">保存</button></div>
+    <div class="status" id="rankStatus">読み込み中…</div>
+    <ol class="rlist" id="rankList"></ol>
+  </div>
+</div>
+
+<div class="modal hidden" id="shareModal">
+  <div class="card">
+    <div class="mhead"><h2>友達に共有</h2><button class="x" data-close="shareModal" aria-label="閉じる">✕</button></div>
+    <div class="sharebox" id="shareText"></div>
+    <button class="btn primary" id="bCopy">テキストをコピー</button>
+    <div class="slinks"><a class="btn x-tw" id="lnkX" href="#" target="_blank" rel="noopener">Xでポスト</a><a class="btn line" id="lnkLine" href="#" target="_blank" rel="noopener">LINEで送る</a></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ================= 設定（プレイテストで調整する値） ================= */
+const SHARE_URL = "https://ten-webworkus.github.io/0ms-jump/";
+const T_BASE = 4.0;        // 坂の長さを決める基準の助走秒数
+const T_MIN = 3.0, T_MAX = 5.5;   // 助走時間は毎回この範囲でランダム
+let T0 = T_BASE;
+const SPD_MIN = 0.6, SPD_MAX = 1.8;   // 滑走中に画面内で人・景色が動く速さの倍率（毎回この範囲でランダム）
+let SCREEN_SPEED = 1;           // 今回の滑走開始から踏切ポイント到達までの秒数
+const WORLD_MS = 0.5;      // 世界一周は表示が「0ms」になるときだけ（誤差0.5ms未満）
+const PERFECT_MS = 20;     // PERFECT 許容誤差 ±ms
+const GREAT_MS = 70;       // GREAT 許容誤差 ±ms
+const EARLY_MS = 400;      // これより早いタップは「早すぎ」
+const LATE_MS = 150;       // 踏切ポイント通過後、この時間を過ぎたら MISS
+
+/* ================= 世界一周ルート（東まわり・距離はおおよそ） ================= */
+const LOOP_KM = 33810;
+const REGIONS = [
+  [-1e9, 90, '日本', 'snow'],
+  [90, 6120, '太平洋', 'ocean'],
+  [6120, 6190, 'ハワイ', 'land'],
+  [6190, 10180, '太平洋', 'ocean'],
+  [10180, 10500, 'アメリカ西海岸', 'land'],
+  [10500, 11800, 'アメリカ南西部の砂漠', 'desert'],
+  [11800, 14250, 'アメリカ', 'land'],
+  [14250, 19700, '大西洋', 'ocean'],
+  [19700, 19790, 'イギリス', 'land'],
+  [19790, 19830, 'ドーバー海峡', 'ocean'],
+  [19830, 20900, 'フランス', 'land'],
+  [20900, 21350, 'イタリア', 'land'],
+  [21350, 23250, '地中海', 'ocean'],
+  [23250, 23600, 'エジプト', 'desert'],
+  [23600, 25810, 'アラビア半島', 'desert'],
+  [25810, 25900, 'ペルシャ湾', 'ocean'],
+  [25900, 27100, 'イラン・パキスタン', 'desert'],
+  [27100, 28400, 'インド', 'land'],
+  [28400, 29700, 'ヒマラヤ山脈', 'snow'],
+  [29700, 31950, '中国', 'land'],
+  [31950, 32550, '黄海', 'ocean'],
+  [32550, 32900, '韓国', 'land'],
+  [32900, 33550, '日本海', 'ocean'],
+  [33550, 1e9, '日本', 'snow']
+];
+const LANDMARKS = [
+  { km: -40, t: 'fuji', n: '' },
+  { km: 6150, t: 'palm', n: 'ホノルル' },
+  { km: 10260, t: 'city', n: 'ロサンゼルス' },
+  { km: 10850, t: 'mesa', n: 'グランドキャニオン' },
+  { km: 14200, t: 'nyc', n: 'ニューヨーク' },
+  { km: 19770, t: 'clock', n: 'ロンドン' },
+  { km: 20110, t: 'eiffel', n: 'パリ' },
+  { km: 21220, t: 'colos', n: 'ローマ' },
+  { km: 23360, t: 'pyr', n: 'カイロ' },
+  { km: 25780, t: 'spire', n: 'ドバイ' },
+  { km: 27980, t: 'dome', n: 'デリー' },
+  { km: 28980, t: 'peak', n: 'エベレスト' },
+  { km: 31760, t: 'pagoda', n: '北京' },
+  { km: 32710, t: 'tower', n: 'ソウル' },
+  { km: LOOP_KM + 0.32, t: 'fuji', n: '富士山' }
+];
+function regionAt(km){ for(const r of REGIONS) if(km >= r[0] && km < r[1]) return r; return REGIONS[0]; }
+function placeName(km, world){
+  if(world) return '日本・富士山（世界一周！）';
+  const r = regionAt(km);
+  if(r[3] === 'ocean') return `${r[2]}に着水`;
+  let best = null, bd = 1e9;
+  for(const l of LANDMARKS){ if(!l.n) continue; const d = Math.abs(l.km - km); if(d < bd){ bd = d; best = l; } }
+  if(best && bd < 250 && regionAt(best.km)[2] === r[2]) return `${best.n}付近（${r[2]}）`;
+  return r[2];
+}
+
+/* ================= 基本 ================= */
+const $ = id => document.getElementById(id);
+const cv = $('game'), ctx = cv.getContext('2d');
+const DEG = Math.PI / 180, G = 9.8;
+let W = 0, H = 0, DPR = 1, PPM = 10, SK = 30;
+function resize(){
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  SK = Math.max(52, Math.min(96, Math.min(W, H) * (W < H ? 0.17 : 0.125))) / 1.8;
+}
+window.addEventListener('resize', resize); resize();
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const ss = u => { u = u < 0 ? 0 : u > 1 ? 1 : u; return u * u * (3 - 2 * u); };
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const easeOut = u => 1 - Math.pow(1 - clamp(u, 0, 1), 3);
+const fmt1 = v => v.toLocaleString('ja-JP', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fmt0 = v => Math.round(v).toLocaleString('ja-JP');
+function fmtKm(km){ return km < 1 ? `${fmt0(km * 1000)} m` : `${fmt1(km)} km`; }
+
+/* ================= 富士山コース ================= */
+const V0 = 30, V_TOP = 3046;                       // 最高速度（約11,000km/h）は据え置き
+const INRUN_LEN = V0 * T_BASE + 0.5 * (V_TOP - V0) * T_BASE;   // 坂の長さは固定
+let ACC = 0, V_EDGE = 0;
+let V0R = V0;   // その周の滑り出しの速さ（2周目以降は空から勢いよく着地するので速い）
+function setRunTime(T, v0){ T0 = T; V0R = v0 == null ? V0 : v0; ACC = 2 * (INRUN_LEN - V0R * T0) / (T0 * T0); V_EDGE = V0R + ACC * T0; }
+setRunTime(T_BASE);
+const DSI = 0.5;
+function inrunAngle(s){
+  if(s < 7) return 11 * DEG;
+  if(s < 60) return (11 + 3 * ss((s - 7) / 53)) * DEG;
+  if(s < 600) return 14 * DEG;
+  if(s < 900) return (14 + 8 * ss((s - 600) / 300)) * DEG;
+  if(s < INRUN_LEN + 40) return (22 + 11 * Math.pow(clamp((s - 900) / (INRUN_LEN - 900), 0, 1), 1.2)) * DEG;
+  return 0;
+}
+const INRUN = (() => {
+  const len = INRUN_LEN + 160, n = Math.ceil(len / DSI);
+  const o = { x: new Float64Array(n + 1), y: new Float64Array(n + 1), a: new Float64Array(n + 1), n };
+  let x = 0, y = 0;
+  for(let i = 0; i <= n; i++){
+    o.x[i] = x; o.y[i] = y; o.a[i] = inrunAngle(i * DSI);
+    const a2 = inrunAngle((i + 0.5) * DSI);
+    x -= Math.cos(a2) * DSI; y -= Math.sin(a2) * DSI;
+  }
+  return o;
+})();
+function sampleIn(s){
+  s = clamp(s, 0, INRUN.n * DSI);
+  const f = s / DSI, i = Math.min(INRUN.n - 1, Math.floor(f)), u = f - i;
+  return { x: lerp(INRUN.x[i], INRUN.x[i + 1], u), y: lerp(INRUN.y[i], INRUN.y[i + 1], u), a: lerp(INRUN.a[i], INRUN.a[i + 1], u) };
+}
+const JP = sampleIn(900);                 // 山腹とジャンプ台の分岐点
+const SUMMIT = sampleIn(INRUN_LEN + 160); // 山頂（台地の端）
+const XS = SUMMIT.x;
+const KG = Math.tan(22 * DEG);
+function inrunYAtX(x){
+  const X = INRUN.x, n = INRUN.n;
+  if(x >= 0) return 0; if(x <= X[n]) return INRUN.y[n];
+  let lo = 0, hi = n;
+  while(hi - lo > 1){ const m = (lo + hi) >> 1; if(X[m] >= x) lo = m; else hi = m; }
+  return lerp(INRUN.y[lo], INRUN.y[hi], (X[lo] - x) / (X[lo] - X[hi]));
+}
+function terrainY(x){
+  if(x < XS) return terrainY(2 * XS - x);
+  if(x <= JP.x) return inrunYAtX(x);
+  const d = Math.min(4000, x - JP.x);
+  return JP.y + KG * (d - d * d / 8000);
+}
+function inrunPos(t){
+  const s = V0R * t + 0.5 * ACC * t * t, d = INRUN_LEN - s, v = V0R + ACC * t;
+  if(d < 0){ const m = missPos(t - T0); return { ...m, d, s, past: true }; }
+  const p = sampleIn(d);
+  return { x: p.x, y: p.y, a: p.a, v, d, s, past: false };
+}
+// 踏切ポイントを踏み切らずに通過したとき：勢いを保ったまま台から飛び出し、急に失速して落ちる
+const MISS_TAU = 0.25, MISS_G = 60, EDGE_A = 11 * DEG;
+function missPos(tp){
+  const e = Math.exp(-tp / MISS_TAU), k = MISS_TAU * (1 - e);
+  const vx0 = V_EDGE * Math.cos(EDGE_A), vy0 = V_EDGE * Math.sin(EDGE_A);
+  const x = vx0 * k, y = vy0 * k + 0.5 * MISS_G * tp * tp;
+  const vx = vx0 * e, vy = vy0 * e + MISS_G * tp;
+  return { x, y, a: Math.atan2(vy, Math.max(1, vx)), v: Math.hypot(vx, vy) };
+}
+// 中継カメラ風：0.65秒ごとに固定カメラを切り替え、スキーヤーが画面を左→右に駆け抜ける
+const SHOT_LEN = 0.65;
+const SHOT_CUTS = (() => { const c = []; for(let t = 0; t < T_BASE - SHOT_LEN * 0.9; t += SHOT_LEN) c.push(t); return c; })();
+function shotView(t){
+  let i = SHOT_CUTS.length - 1;
+  while(i > 0 && t < SHOT_CUTS[i]) i--;
+  const last = i === SHOT_CUTS.length - 1;
+  const ta = SHOT_CUTS[i], tb = last ? T0 : SHOT_CUTS[i + 1];
+  const pa = inrunPos(ta), pb = last ? { x: 0, y: 0 } : inrunPos(tb);
+  const vmin = W < H ? 70 : 110;
+  const span = last ? 0.72 : 0.78;          // 1ショットで横切る画面幅の割合
+  const startFrac = last ? 0.08 : 0.1;
+  const vw = Math.max(vmin, (pb.x - pa.x) / span);
+  const cx = pa.x + (0.5 - startFrac) * vw;
+  const ppm = W / vw;
+  const cy = (pa.y + pb.y) / 2 + (last ? 0.1 : 0.04) * H / ppm;
+  return { i, vw, vmin, cx, cy, ppm };
+}
+let _frame = null, _frameKey = '';
+function inrunFrame(){
+  const key = W + 'x' + H;
+  if(_frameKey === key) return _frame;
+  const g = sampleIn(INRUN_LEN + 12);
+  // 山頂を左上（HUDの下）、踏切ポイントを右下（ボタンの上）に置いて全体を収める
+  const left = W < H ? 0.08 : 0.06, right = 0.86, top = 0.2, bottom = 0.76;
+  const ppm = Math.min(W * (right - left) / (0 - g.x), H * (bottom - top) / (0 - g.y));
+  const vw = W / ppm;
+  const cx = g.x + (0.5 - left) * vw;
+  const cy = g.y + (0.5 - top) * H / ppm;
+  _frame = { vw, cx, cy, scale: W < H ? 0.62 : 0.7 }; _frameKey = key;
+  return _frame;
+}
+function phase1View(dist){
+  const vmin = W < H ? 70 : 110;
+  const wide = 1 - ss((1 - Math.max(0, dist) / INRUN_LEN) * 4);   // 序盤は富士山全体を見せる
+  return { vw: Math.max(0, dist) * (1.35 + 0.95 * wide) + vmin, vmin, ax: lerp(0.18, 0.5, wide) };
+}
+
+/* ================= 判定・飛距離 ================= */
+const logLerp = (a, b, u) => Math.exp(lerp(Math.log(a), Math.log(b), clamp(u, 0, 1)));
+function judge(errMs){
+  const a = Math.abs(errMs); let d, g, world = false;
+  if(a < WORLD_MS){ g = 'PERFECT'; d = LOOP_KM; world = true; }
+  else if(a <= PERFECT_MS){ g = 'PERFECT'; d = logLerp(32700, 14200, (a - WORLD_MS) / (PERFECT_MS - WORLD_MS)); }
+  else if(a <= GREAT_MS){ g = 'GREAT'; d = logLerp(13000, 3000, (a - PERFECT_MS) / (GREAT_MS - PERFECT_MS)); }
+  else { g = 'GOOD'; const lim = errMs < 0 ? EARLY_MS : LATE_MS; d = logLerp(2500, 15, Math.pow((a - GREAT_MS) / (lim - GREAT_MS), 0.9)); }
+  return { grade: g, dist: Math.round(d * 10) / 10, world };
+}
+
+/* ================= サウンド ================= */
+let AC = null, master = null, noiseBuf = null, slideG, slideF, windG, windF;
+let muted = store.get('pt_muted', false);
+// iPhoneのマナーモード中でも鳴らす：音声の種類を「再生」にする（iOS 17以降）＋無音のaudio要素で再生モードに切り替える（古いiOS向け）
+let _silentEl = null;
+function silentWavUrl(){
+  const sr = 8000, n = 800, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, str) => { for(let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+function forcePlaybackSession(){
+  try{ if(navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; }catch(e){}
+  try{
+    if(!_silentEl){ _silentEl = document.createElement('audio'); _silentEl.src = silentWavUrl(); _silentEl.loop = true; _silentEl.setAttribute('playsinline', ''); _silentEl.preload = 'auto'; }
+    if(_silentEl.paused){ const pr = _silentEl.play(); if(pr && pr.catch) pr.catch(() => {}); }
+  }catch(e){}
+}
+function unlockAudio(){
+  try{
+    forcePlaybackSession();
+    if(!AC){
+      const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
+      AC = new C(); master = AC.createGain(); master.gain.value = muted ? 0 : 0.9; master.connect(AC.destination);
+      noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+      const d = noiseBuf.getChannelData(0); for(let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const s1 = AC.createBufferSource(); s1.buffer = noiseBuf; s1.loop = true;
+      slideF = AC.createBiquadFilter(); slideF.type = 'bandpass'; slideF.frequency.value = 1500; slideF.Q.value = 0.7;
+      slideG = AC.createGain(); slideG.gain.value = 0; s1.connect(slideF); slideF.connect(slideG); slideG.connect(master); s1.start();
+      const s2 = AC.createBufferSource(); s2.buffer = noiseBuf; s2.loop = true; s2.playbackRate.value = 0.6;
+      windF = AC.createBiquadFilter(); windF.type = 'lowpass'; windF.frequency.value = 400;
+      windG = AC.createGain(); windG.gain.value = 0; s2.connect(windF); windF.connect(windG); windG.connect(master); s2.start();
+    }
+    if(AC.state !== 'running') AC.resume().catch(() => {});
+    if(bgmOn) bgmStart();
+  }catch(e){}
+}
+function setLoop(g, f, gain, freq){ if(!AC) return; const t = AC.currentTime; g.gain.setTargetAtTime(gain, t, 0.06); if(freq) f.frequency.setTargetAtTime(freq, t, 0.08); }
+function noiseBurst({dur = .3, type = 'bandpass', f0 = 800, f1 = 800, q = 1, gain = .5, attack = .005, delay = 0}){
+  if(!AC) return; ensureRunning(); const t = AC.currentTime + delay;
+  const s = AC.createBufferSource(); s.buffer = noiseBuf;
+  const f = AC.createBiquadFilter(); f.type = type; f.Q.value = q;
+  f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+  const g = AC.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random() * 0.8); s.stop(t + dur + 0.05);
+}
+function ensureRunning(){ if(AC && AC.state !== 'running'){ AC.resume().catch(() => {}); } }
+function tone({type = 'sine', f0 = 440, f1 = 0, dur = .3, gain = .3, attack = .005, delay = 0}){
+  if(!AC) return; ensureRunning(); const t = AC.currentTime + delay;
+  const o = AC.createOscillator(); o.type = type; o.frequency.setValueAtTime(f0, t);
+  if(f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = AC.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+}
+const SFX = {
+  start(){ tone({type:'triangle', f0:660, dur:.12, gain:.14}); tone({type:'triangle', f0:990, dur:.2, gain:.14, delay:.1}); },
+  jump(perfect, q){
+    noiseBurst({dur:.5, f0:500, f1:4000, q:.8, gain:.55});
+    tone({type:'triangle', f0:180 + q * 140, f1:420 + q * 380, dur:.2, gain:.28});
+    if(perfect){
+      [1046.5, 1318.5, 1568, 2093, 2637].forEach((f, i) => tone({type:'triangle', f0:f, dur:.75, gain:.17, delay:.04 + i * .06}));
+      tone({type:'sine', f0:4186, dur:1.3, gain:.05, delay:.32});
+      noiseBurst({dur:.9, type:'highpass', f0:6000, f1:9500, gain:.12, delay:.05});
+    }
+  },
+  land(){ noiseBurst({dur:.38, type:'lowpass', f0:1900, f1:280, q:.5, gain:.75}); tone({f0:120, f1:45, dur:.3, gain:.5}); },
+  splash(){ noiseBurst({dur:.7, type:'bandpass', f0:2500, f1:500, q:.6, gain:.8}); tone({f0:420, f1:110, dur:.35, gain:.3}); tone({f0:300, f1:140, dur:.25, gain:.2, delay:.3}); },
+  crash(){ noiseBurst({dur:.65, type:'lowpass', f0:1500, f1:140, gain:.85}); tone({f0:90, f1:35, dur:.45, gain:.6}); tone({type:'square', f0:300, f1:90, dur:.5, gain:.05, delay:.05}); },
+  miss(){ tone({type:'triangle', f0:440, f1:190, dur:.4, gain:.18}); },
+  early(){ tone({type:'square', f0:230, dur:.12, gain:.06}); tone({type:'square', f0:180, dur:.14, gain:.06, delay:.12}); },
+  pass(){ tone({type:'triangle', f0:1320, dur:.12, gain:.07}); tone({type:'triangle', f0:1760, dur:.16, gain:.07, delay:.07}); },
+  fanfare(){ [784, 988, 1175, 1568].forEach((f, i) => tone({type:'triangle', f0:f, dur:.35, gain:.14, delay:i * .09})); tone({type:'triangle', f0:2093, dur:.9, gain:.13, delay:.38}); },
+  world(){ [523, 659, 784, 1047, 784, 1047, 1319, 1568].forEach((f, i) => tone({type:'triangle', f0:f, dur:.4, gain:.15, delay:i * .12})); tone({type:'triangle', f0:2093, dur:1.4, gain:.15, delay:1.0}); noiseBurst({dur:1.2, type:'highpass', f0:5000, f1:9000, gain:.1, delay:.9}); },
+  click(){ tone({f0:880, dur:.06, gain:.07}); },
+  cut(){ noiseBurst({dur:.22, f0:3000, f1:700, q:.9, gain:.18}); }
+};
+/* ================= BGM（オリジナル曲をブラウザ内で合成・ループ再生） ================= */
+let bgmOn = store.get('pt_bgm', true), bgmGain = null, bgmTimer = null, bgmNext = 0, bgmStep = 0;
+const BGM_BPM = 150, BGM_16 = 60 / BGM_BPM / 4, BGM_VOL = 0.5;
+const mf = n => 440 * Math.pow(2, (n - 69) / 12);
+const BGM_ROOT = [36, 31, 33, 29, 36, 31, 29, 31];              // C G Am F | C G F G
+const BGM_CHORD = [[60,64,67],[59,62,67],[60,64,69],[60,65,69],[60,64,67],[59,62,67],[60,65,69],[59,62,67]];
+const BGM_MEL = [ // [MIDI, 8分音符の長さ]  0 = 休符
+  [[76,1],[79,1],[84,2],[83,1],[79,1],[76,2]],
+  [[74,1],[79,1],[83,2],[81,1],[79,1],[74,2]],
+  [[72,1],[76,1],[81,2],[79,1],[76,1],[72,1],[76,1]],
+  [[77,2],[81,2],[79,2],[0,2]],
+  [[76,1],[79,1],[84,1],[88,1],[86,2],[84,2]],
+  [[83,1],[81,1],[79,2],[86,2],[83,2]],
+  [[81,1],[84,1],[89,2],[88,1],[86,1],[84,2]],
+  [[83,2],[86,2],[91,3],[0,1]]
+];
+const BGM_LEAD = (() => { const a = []; BGM_MEL.forEach((bar, b) => { let st = b * 16; for(const [n, l] of bar){ if(n) a[st] = [n, l * 2]; st += l * 2; } }); return a; })();
+function bgmVoice(type, freq, t, dur, gain){
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(gain * 0.55, t + Math.min(dur, 0.12));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(bgmGain); o.start(t); o.stop(t + dur + 0.02);
+}
+function bgmNoise(t, dur, gain, type, freq){
+  const s = AC.createBufferSource(); s.buffer = noiseBuf;
+  const f = AC.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+  const g = AC.createGain(); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(bgmGain); s.start(t, Math.random() * 1.2); s.stop(t + dur + 0.02);
+}
+function bgmKick(t){
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+  g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+  o.connect(g); g.connect(bgmGain); o.start(t); o.stop(t + 0.18);
+}
+function bgmSchedule(step, t){
+  const bar = Math.floor(step / 16) % 8, s = step % 16;
+  if(s % 2 === 0) bgmNoise(t, 0.04, 0.06, 'highpass', 7000);
+  if(s === 0 || s === 8 || (s === 10 && bar % 2 === 1)) bgmKick(t);
+  if(s === 4 || s === 12) bgmNoise(t, 0.12, 0.18, 'bandpass', 1800);
+  if(s % 2 === 0) bgmVoice('triangle', mf(BGM_ROOT[bar] + (s % 4 === 2 ? 12 : 0)), t, BGM_16 * 1.8, 0.32);
+  bgmVoice('square', mf(BGM_CHORD[bar][s % 3]), t, BGM_16 * 0.9, 0.025);
+  const L = BGM_LEAD[(step % 128)];
+  if(L) bgmVoice('square', mf(L[0]), t, BGM_16 * L[1] * 0.92, 0.085);
+}
+function bgmStart(){
+  if(!AC || bgmTimer) return;
+  if(!bgmGain){ bgmGain = AC.createGain(); bgmGain.gain.value = BGM_VOL; bgmGain.connect(AC.destination); }
+  bgmGain.gain.setTargetAtTime(BGM_VOL, AC.currentTime, 0.05);
+  bgmNext = AC.currentTime + 0.1;
+  bgmTimer = setInterval(() => {
+    if(!AC) return;
+    if(AC.state !== 'running') return;
+    if(bgmNext < AC.currentTime - 0.5) bgmNext = AC.currentTime + 0.05;
+    while(bgmNext < AC.currentTime + 0.15){ bgmSchedule(bgmStep, bgmNext); bgmStep = (bgmStep + 1) % 128; bgmNext += BGM_16; }
+  }, 25);
+}
+function bgmStop(){
+  if(bgmTimer){ clearInterval(bgmTimer); bgmTimer = null; }
+  if(bgmGain && AC) bgmGain.gain.setTargetAtTime(0, AC.currentTime, 0.03);
+}
+function setBgm(on){
+  bgmOn = on; store.set('pt_bgm', on); $('btnBgm').classList.toggle('off', !on);
+  if(on) bgmStart(); else bgmStop();
+}
+document.addEventListener('visibilitychange', () => {
+  if(!AC) return;
+  if(document.hidden){ bgmStop(); if(_silentEl) try{ _silentEl.pause(); }catch(e){} }
+  else { AC.resume().catch(() => {}); if(bgmOn) bgmStart(); }
+});
+function setMuted(m){
+  muted = m; store.set('pt_muted', m); $('btnSound').textContent = m ? '🔇' : '🔊';
+  if(AC && master) master.gain.setTargetAtTime(m ? 0 : 0.9, AC.currentTime, 0.02);
+}
+setMuted(muted);
+
+/* ================= スキーヤー描画 ================= */
+const POSES = {
+  ready:  {shin:82, thigh:100, torso:78, uarm:265, farm:280, pole:262, head:6,  face:0},
+  tuck:   {shin:52, thigh:168, torso:10, uarm:196, farm:186, pole:187, head:22, face:-4},
+  ext:    {shin:74, thigh:82,  torso:46, uarm:202, farm:194, pole:192, head:8,  face:4},
+  flight: {shin:30, thigh:26,  torso:21, uarm:191, farm:187, pole:185, head:14, face:2},
+  land:   {shin:62, thigh:128, torso:68, uarm:330, farm:346, pole:300, head:2,  face:0},
+  stand:  {shin:80, thigh:102, torso:80, uarm:292, farm:284, pole:262, head:4,  face:0},
+  banzai: {shin:80, thigh:102, torso:82, uarm:70,  farm:85,  pole:95,  head:8,  face:20},
+  fall:   {shin:24, thigh:66,  torso:138,uarm:92,  farm:50,  pole:35,  head:-10,face:60},
+  down:   {shin:172,thigh:178, torso:182,uarm:150, farm:168, pole:125, head:-6, face:95}
+};
+function lerpPose(a, b, t){ const o = {}; for(const k in a) o[k] = lerp(a[k], b[k], t); return o; }
+const dir = a => [Math.cos(a * DEG), Math.sin(a * DEG)];
+const add = (p, d, l) => [p[0] + d[0] * l, p[1] + d[1] * l];
+function joints(P, back){
+  const sh = back ? P.shin + 7 : P.shin, th = back ? P.thigh - 5 : P.thigh;
+  const ankle = back ? [-0.07, 0.1] : [0, 0.1];
+  const knee = add(ankle, dir(sh), 0.5);
+  const hip = add(knee, dir(th), 0.5);
+  return { ankle, knee, hip };
+}
+function seg(a, b, w, c){ ctx.strokeStyle = c; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+function drawSki(off, rot, color){
+  ctx.save(); ctx.translate(off, 0); ctx.rotate(rot * DEG);
+  ctx.strokeStyle = color; ctx.lineWidth = 0.065; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-0.95, 0.035); ctx.lineTo(1.3, 0.035); ctx.quadraticCurveTo(1.55, 0.035, 1.6, 0.16); ctx.stroke();
+  ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 0.05;
+  ctx.beginPath(); ctx.moveTo(1.05, 0.04); ctx.lineTo(1.3, 0.04); ctx.stroke();
+  ctx.restore();
+}
+function drawArm(P, shoulder, back){
+  const ua = P.uarm + (back ? 9 : 0), fa = P.farm + (back ? 7 : 0), pa = P.pole + (back ? 5 : 0);
+  const elbow = add(shoulder, dir(ua), 0.3), hand = add(elbow, dir(fa), 0.28);
+  const pd = dir(pa);
+  seg(add(hand, pd, -0.06), add(hand, pd, 1.15), 0.035, back ? '#64748b' : '#475569');
+  const bk = add(hand, pd, 1.0);
+  ctx.fillStyle = back ? '#64748b' : '#334155'; ctx.beginPath(); ctx.arc(bk[0], bk[1], 0.045, 0, Math.PI * 2); ctx.fill();
+  const col = back ? '#172e6e' : '#1e40af';
+  seg(shoulder, elbow, 0.13, col); seg(elbow, hand, 0.115, col);
+  ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(hand[0], hand[1], 0.065, 0, Math.PI * 2); ctx.fill();
+}
+function drawSkier(sx, sy, ang, P, opt){
+  opt = opt || {};
+  const k = SK * (opt.scale || 1);
+  ctx.save(); ctx.translate(sx, sy); ctx.rotate(ang); ctx.scale(k, -k);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const F = joints(P, false), B = joints(P, true);
+  if(opt.pivotHip){ ctx.translate(0, 0.16); ctx.translate(-F.hip[0], -F.hip[1]); }
+  const td = dir(P.torso), hip = F.hip;
+  const neck = add(hip, td, 0.62), shoulder = add(hip, td, 0.55);
+  drawArm(P, shoulder, true);
+  const vs = opt.vspread || 0;
+  drawSki(-0.07, 6 * vs, '#334155');
+  seg(B.ankle, B.knee, 0.165, '#172e6e'); seg(B.knee, hip, 0.2, '#172e6e');
+  ctx.fillStyle = '#0b1220'; ctx.beginPath(); ctx.ellipse(B.ankle[0] + 0.04, B.ankle[1] - 0.02, 0.12, 0.07, 0, 0, Math.PI * 2); ctx.fill();
+  drawSki(0, 0, '#1e293b');
+  seg(hip, neck, 0.32, '#2563eb');
+  const nrm = dir(P.torso + 90);
+  seg(add(add(hip, td, 0.22), nrm, 0.07), add(add(hip, td, 0.6), nrm, 0.07), 0.12, '#f8fafc');
+  seg(F.ankle, F.knee, 0.17, '#1e40af'); seg(F.knee, hip, 0.21, '#1e40af');
+  ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.ellipse(F.ankle[0] + 0.05, F.ankle[1] - 0.02, 0.13, 0.075, 0, 0, Math.PI * 2); ctx.fill();
+  const hc = add(neck, dir(P.torso + P.head), 0.17), fd = P.face;
+  const fc = add(hc, dir(fd - 25), 0.045);
+  ctx.fillStyle = '#f3c5a0'; ctx.beginPath(); ctx.arc(fc[0], fc[1], 0.115, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#1d4ed8'; ctx.beginPath(); ctx.arc(hc[0], hc[1], 0.155, (fd + 38) * DEG, (fd + 250) * DEG, false); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#3b82f6'; ctx.globalAlpha = .55; ctx.beginPath(); ctx.arc(hc[0], hc[1], 0.155, (fd + 70) * DEG, (fd + 120) * DEG, false); ctx.lineTo(hc[0], hc[1]); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+  const gp = add(hc, dir(fd + 8), 0.11);
+  ctx.save(); ctx.translate(gp[0], gp[1]); ctx.rotate((fd + 8) * DEG);
+  ctx.fillStyle = '#0f172a'; ctx.fillRect(-0.06, -0.05, 0.12, 0.1);
+  ctx.fillStyle = '#22d3ee'; ctx.fillRect(-0.035, -0.035, 0.085, 0.07);
+  ctx.restore();
+  drawArm(P, shoulder, false);
+  ctx.restore();
+}
+
+/* ================= 状態 ================= */
+let state = 'title';
+let run = null;
+let cam = { x: 0, y: 0 };
+let sk = { x: 0, y: 0, a: 0, P: POSES.ready, pivotHip: false, v: 0, vspread: 0, scale: 1 };
+let particles = [], sparts = [], speedLines = [], confetti = [];
+let shake = 0, flash = 0, flashColor = '255,236,140';
+let best = store.get('pt3_best', null);
+let myName = store.get('pt_name', null);
+if(!myName || typeof myName !== 'string'){ myName = 'SKIER' + Math.floor(100 + Math.random() * 900); store.set('pt_name', myName); }
+let liveKm = 0, liveKmh = 0, modalOpen = false, regionLabel = '';
+// flight scene
+let fl = { km: 0, vkm: 1, alt: 0, space: 0, tex: 0, skY: 0, ang: 0, lastRegion: '' };
+function updateTitleBest(){ $('titleBest').textContent = best ? `自己ベスト ${fmtKm(best.d)}（${best.place || best.g}）` : ''; }
+updateTitleBest();
+
+let readyMode = false;
+function goReady(){
+  run = null; state = 'title'; readyMode = true;
+  liveKm = 0; liveKmh = 0; regionLabel = '';
+  particles = []; sparts = []; speedLines = []; confetti = [];
+  shake = 0; flash = 0;
+  hideJudge(); $('judge').style.opacity = 0;
+  $('toVal').textContent = '--';
+  $('result').classList.add('hidden'); $('title').classList.add('hidden');
+}
+// cont=true：0msで世界一周して富士山頂に戻り、そのまま次の周を滑り始める
+function startRun(ts, cont){
+  readyMode = false;
+  const nextT = cont && run && run.nextT ? run.nextT : T_MIN + Math.random() * (T_MAX - T_MIN);   // 踏切までの時間は周ごとにランダム
+  setRunTime(nextT, cont ? Math.min(ARR_V, 0.9 * INRUN_LEN / nextT) : null);
+  if(!(cont && run && run.nextSpd)) SCREEN_SPEED = SPD_MIN + Math.random() * (SPD_MAX - SPD_MIN);   // 画面内の動きの速さも周ごとにランダム
+  const lap = cont && run ? run.lap + 1 : 1, base = cont && run ? run.base + LOOP_KM : 0;
+  run = { start: ts, lap, base, cont: !!cont, tapped: false, early: false, jumped: false, grade: null, dist: null, err: null, world: false, flight: null, land: null, fall: null, resultShown: false, resultAt: 0, place: '', next: false };
+  state = 'inrun'; liveKm = 0; regionLabel = '';
+  $('title').classList.add('hidden'); $('result').classList.add('hidden');
+  hideJudge(); confetti = []; sparts = []; particles = [];
+  $('toVal').textContent = '--';
+  if(cont){ showJudge(`${lap}周目!`, 'perfect small', 'そのまま滑走中！踏切でタップ'); SFX.pass(); }
+  else SFX.start();
+}
+function evTime(e){
+  const n = performance.now(), t = e && e.timeStamp;
+  return (t && t > 0 && Math.abs(n - t) < 500) ? t : n;
+}
+function onTap(ts){
+  if(modalOpen) return;
+  unlockAudio();
+  if(state === 'title'){ startRun(ts); return; }
+  if(state === 'inrun'){ tryJump(ts); return; }
+  if(run && run.resultShown && performance.now() - run.resultAt > 350){ startRun(ts); }
+}
+function tryJump(ts){
+  const tt = (ts - run.start) / 1000;
+  if(tt < 0.25 || run.tapped) return;
+  const err = (tt - T0) * 1000;
+  if(err > LATE_MS) return;
+  run.tapped = true;
+  if(err < -EARLY_MS){
+    run.early = true; run.err = err;
+    showJudge('早すぎ!', 'miss small', '踏切ポイントの手前です');
+    $('toVal').textContent = '早すぎ';
+    SFX.early(); return;
+  }
+  doJump(tt, err);
+}
+function doJump(tt, err){
+  const j = judge(err);
+  run.jumped = true; run.err = err; run.grade = j.grade; run.dist = j.dist; run.world = j.world;
+  const D = j.dist;
+  const T = 2.2 + 2.6 * Math.log10(1 + D / 10);
+  const wEnd = Math.min(0.5, 0.35 * T / D);
+  const perfect = j.grade === 'PERFECT';
+  run.flight = { tj: tt, D, T, wEnd, perfect, maxAlt: clamp(0.12 + 0.11 * Math.log10(1 + D / 10), 0.12, 0.5) };
+  state = 'flight';
+  fl = { km: 0, vkm: 1, alt: 0, space: 0, tex: 0, skY: 0, ang: 0, lastRegion: '' };
+  const sgn = (Math.round(err) || 0) >= 0 ? '+' : '−';   // −0ms と表示しない
+  $('toVal').innerHTML = `${sgn}${Math.abs(Math.round(err))}<small>ms</small>`;
+  const word = perfect ? 'PERFECT!' : j.grade === 'GREAT' ? 'GREAT!' : 'GOOD';
+  showJudge(word, perfect ? 'perfect' : j.grade.toLowerCase(), timingText(err));
+  SFX.jump(perfect, Math.min(1, D / LOOP_KM));
+  flash = 1; flashColor = perfect ? '255,236,140' : '255,255,255';
+  shake = perfect ? 12 : 4;
+}
+function fmtErr(err){ const r = Math.round(err) || 0; return (r >= 0 ? '+' : '−') + Math.abs(r) + ' ms'; }
+function timingText(err){
+  const a = Math.abs(Math.round(err));
+  if(a <= PERFECT_MS) return a === 0 ? 'ジャストタイミング！' : `誤差 ${a}ms`;
+  return err < 0 ? `${a}ms 早い` : `${a}ms 遅い`;
+}
+// flight helpers
+function flKm(f, s){ s = clamp(s, 0, 1); return f.D * ((1 - f.wEnd) * (1 - Math.pow(1 - s, 2.4)) + f.wEnd * s); }
+function flSpeed(f, s){ s = clamp(s, 0, 1); return f.D * ((1 - f.wEnd) * 2.4 * Math.pow(1 - s, 1.4) + f.wEnd) / f.T; } // km/s
+function flAltPx(f, s){ s = clamp(s, 0, 1); return 46 * Math.pow(1 - s, 1.5) + f.maxAlt * H * Math.pow(Math.sin(Math.PI * s), 0.7); }
+const GY = () => H * 0.8;
+const SKX = () => W * 0.36;
+function groundAt(sx){ const u = (sx - W * 0.5) / (W * 0.5); return GY() + fl.space * H * 0.1 * u * u; }
+
+const ARR_T = 1.4, ARR_V = 1000, ARR_H = 450;   // 頂上へ舞い降りる時間・速さ・高さ
+function beginArrive(t0, km0){
+  state = 'arrive';
+  run.arrive = { t0, km0 };
+  run.nextT = T_MIN + Math.random() * (T_MAX - T_MIN);
+  SCREEN_SPEED = SPD_MIN + Math.random() * (SPD_MAX - SPD_MIN); run.nextSpd = true;
+  flash = Math.max(flash, 0.45); flashColor = '255,255,255';
+  showJudge('世界一周!', 'perfect', `${run.lap + 1}周目へ突入！`);
+  SFX.world();
+}
+function startFall(t){
+  state = 'fall';
+  run.grade = 'MISS';
+  run.fall = { t0: t, impact: null };
+  if(!run.early){ $('toVal').textContent = 'MISS'; showJudge('MISS', 'miss', '踏切ポイントを通過…'); }
+  else showJudge('MISS', 'miss', '早すぎてバランスを崩した');
+  SFX.miss();
+}
+function land(t){
+  const f = run.flight;
+  const r = regionAt(f.D);
+  run.land = { t, v: flSpeed(f, 1), water: r[3] === 'ocean' };
+  run.place = placeName(f.D, run.world);
+  state = 'landed';
+  liveKm = f.D;
+  const x = SKX(), y = groundAt(x);
+  if(run.land.water){ SFX.splash(); splash(x, y, 70); }
+  else { SFX.land(); sburst(x, y, 45, r[3]); }
+  shake = Math.max(shake, run.world ? 14 : 7);
+  if(run.world){ flash = 0.9; flashColor = '255,236,140'; showJudge('世界一周!', 'perfect', `${run.lap + 1}周目へ突入！`); SFX.world(); }
+}
+
+/* ================= 表示ヘルパ ================= */
+function showJudge(word, cls, sub){
+  const el = $('judgeTxt'), sb = $('judgeSub');
+  el.className = ''; sb.className = '';
+  void el.offsetWidth;
+  $('judgeWord').textContent = word;
+  el.className = 'show ' + cls;
+  sb.textContent = sub || ''; sb.className = sub ? 'show' : '';
+  const J = $('judge'); J.style.opacity = 1; clearTimeout(showJudge._t);
+  showJudge._t = setTimeout(() => { J.style.opacity = 0; }, cls.indexOf('perfect') >= 0 ? 2200 : 1600);
+}
+function hideJudge(){ $('judgeTxt').className = ''; $('judgeSub').className = ''; }
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 1800); }
+
+/* ================= パーティクル ================= */
+function burst(x, y, n, sp){
+  for(let i = 0; i < n; i++){
+    const a = -Math.PI * (0.1 + 0.8 * Math.random()), v = sp * (0.3 + Math.random());
+    particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0, max: .6 + Math.random() * .6, r: 2 + Math.random() * 4 });
+  }
+}
+function spray(x, y, a, v, rate, dt){
+  const n = rate * dt; let k = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
+  const L = 0.85 * SK * sk.scale / PPM;
+  const tx = x - Math.cos(a) * L, ty = y - Math.sin(a) * L;
+  const sp = Math.min(v, 60) * Math.max(1, 12 / Math.max(PPM, 0.01));
+  while(k-- > 0){
+    const vk = Math.max(1, 12 / Math.max(PPM, 0.01));
+    particles.push({ x: tx + (Math.random() - .5) * L * .3, y: ty, vx: -Math.cos(a) * sp * (0.05 + Math.random() * .12) + (Math.random() - .5) * 2 * vk, vy: (-1 - Math.random() * 3.5) * vk, g: vk, life: 0, max: .35 + Math.random() * .45, r: 1.5 + Math.random() * 3.5 });
+  }
+}
+// screen-space particles (flight scene)
+function sburst(x, y, n, type){
+  const col = type === 'desert' ? '232,194,122' : type === 'land' ? '120,180,90' : '255,255,255';
+  for(let i = 0; i < n; i++){
+    const a = -Math.PI * (0.05 + 0.9 * Math.random()), v = 120 + Math.random() * 380;
+    sparts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 900, life: 0, max: .6 + Math.random() * .7, r: 2 + Math.random() * 4, c: col, kind: 'dot' });
+  }
+}
+function splash(x, y, n){
+  for(let i = 0; i < n; i++){
+    const a = -Math.PI * (0.25 + 0.5 * Math.random()), v = 200 + Math.random() * 520;
+    sparts.push({ x: x + (Math.random() - .5) * 30, y, vx: Math.cos(a) * v * .6, vy: Math.sin(a) * v, g: 1100, life: 0, max: .8 + Math.random() * .6, r: 2 + Math.random() * 5, c: i % 3 ? '255,255,255' : '147,197,253', kind: 'dot' });
+  }
+}
+function sparkle(x, y){
+  sparts.push({ x: x + (Math.random() - .5) * 30, y: y + (Math.random() - .5) * 30, vx: -200 - Math.random() * 300, vy: (Math.random() - .5) * 60, g: 0, life: 0, max: .5 + Math.random() * .5, r: 2 + Math.random() * 3, c: '255,214,60', kind: 'star' });
+}
+function launchConfetti(n){
+  const cols = ['#ffd21f', '#ef4444', '#3b82f6', '#22c55e', '#f472b6', '#ffffff'];
+  for(let i = 0; i < (n || 140); i++) confetti.push({ x: Math.random() * W, y: -20 - Math.random() * H * .5, vx: (Math.random() - .5) * 80, vy: 80 + Math.random() * 160, r: Math.random() * 6, vr: (Math.random() - .5) * 10, w: 6 + Math.random() * 6, h: 4 + Math.random() * 6, c: cols[i % cols.length] });
+}
+
+/* ================= 更新 ================= */
+function update(now, dt){
+  let slideV = 0, windV = 0;
+  if(state === 'title' || state === 'inrun' || state === 'fall'){
+    const t = run ? Math.max(0, (now - run.start) / 1000) : 0;
+    if(state === 'title' || state === 'inrun'){
+      const p = inrunPos(state === 'title' ? 0 : t);
+      if(state === 'inrun' && p.past && (run.early || (t - T0) * 1000 > LATE_MS)){ startFall(t); }
+      else {
+        let P = state === 'title' ? POSES.ready : (t < 0.15 && !run.cont) ? lerpPose(POSES.ready, POSES.tuck, ss(t / 0.15)) : POSES.tuck;
+        // スタート画面：富士山全体。滑走中：カメラがスキーヤーに付いて一緒に動く（寄りの画で景色が高速で流れる）
+        const fr = inrunFrame();
+        let scale = fr.scale;
+        if(state === 'title'){ PPM = W / fr.vw; cam.x = fr.cx; cam.y = fr.cy; }
+        else {
+          const vmin = W < H ? 70 : 110;
+          // 寄りの画を倍にして景色の流れを2倍速に。踏切直前の0.6秒だけ少し引いて踏切ポイントを見せる
+          const near = ss((t - (T0 - 0.6)) / 0.6);
+          const vwT = Math.max(vmin * 0.8, p.v * lerp(0.1167 / SCREEN_SPEED, 0.5, near));
+          const ax = 0.22 + Math.min(0.38, 0.3 * SCREEN_SPEED) * clamp(t / T0, 0, 1), ay = 0.42;
+          const z = run.cont ? 1 : ss(t / 0.4);        // 最初の0.4秒で全体図からスキーヤーへ寄る（2周目以降は寄ったまま）
+          const vw = Math.exp(lerp(Math.log(fr.vw), Math.log(vwT), z));
+          PPM = W / vw;
+          // スキーヤーの画面上の位置を、全体図での位置から追いかけ位置へなめらかに移す
+          const fx = (p.x - fr.cx) / fr.vw + 0.5, fy = (p.y - fr.cy) * (W / fr.vw) / H + 0.5;
+          const sxF = lerp(fx, ax, z), syF = lerp(fy, ay, z);
+          cam.x = p.x - (sxF - 0.5) * vw; cam.y = p.y - (syF - 0.5) * H / PPM;
+          scale = lerp(fr.scale, 1, z);
+          if(t > 0.6) shake = Math.max(shake, 1.5 * clamp(p.v / 3000, 0, 1));
+        }
+        sk = { x: p.x, y: p.y, a: p.a, P, pivotHip: false, vspread: 0, v: state === 'title' ? 0 : p.v, scale };
+        if(state === 'inrun' && !p.past){ spray(p.x, p.y, p.a, p.v, Math.min(150, 60 + p.v * 0.1), dt); slideV = p.v; }
+      }
+    }
+    if(state === 'fall'){
+      const F = run.fall, tf = t - F.t0;
+      const view = phase1View(0), vw = view.vmin * 1.8;
+      PPM = lerp(PPM, W / vw, 1 - Math.exp(-dt * 3));
+      if(!F.impact){
+        const m = missPos(t - T0), x = m.x, y = m.y, rot = 3 * tf;
+        if(y >= terrainY(x)){
+          F.impact = { t, x, v: 26, rot0: rot, rotEnd: Math.ceil((rot + Math.PI) / (2 * Math.PI)) * 2 * Math.PI };
+          SFX.crash(); shake = 14; burst(x, terrainY(x), 70, 9);
+        } else {
+          sk = { x, y, a: m.a + rot, P: lerpPose(POSES.tuck, POSES.fall, ss(tf / 0.4)), pivotHip: false, vspread: 0, v: m.v, scale: 1 };
+        }
+      }
+      if(F.impact){
+        const I = F.impact, tl = t - I.t, dec = I.v / 1.1, tt = Math.min(tl, I.v / dec);
+        const x = I.x + I.v * tt - 0.5 * dec * tt * tt, y = terrainY(x);
+        const a = Math.atan2(terrainY(x + 0.5) - y, 0.5);
+        const rot = lerp(I.rot0, I.rotEnd, easeOut(tl / 1.1));
+        const P = tl < 0.7 ? POSES.fall : lerpPose(POSES.fall, POSES.down, ss((tl - 0.7) / 0.4));
+        sk = { x, y, a: a + rot, P, pivotHip: true, vspread: 0, v: 0, scale: 1 };
+        if(I.v - dec * tt > 1) spray(x, y, a, 20, 40, dt);
+        if(tl > 1.4 && !run.resultShown) showResult();
+      }
+      const k = 1 - Math.exp(-dt * (tf < 0.8 ? 25 : 6));   // 飛び出した直後は素早く追いかける
+      cam.x = lerp(cam.x, sk.x + 0.05 * W / PPM, k); cam.y = lerp(cam.y, sk.y - 0.02 * H / PPM, k);
+    }
+  }
+  if(state === 'flight' || state === 'landed'){
+    const f = run.flight, t = (now - run.start) / 1000, tau = t - f.tj;
+    if(state === 'flight' && run.world && tau >= f.T - ARR_T) beginArrive(f.tj + f.T - ARR_T, fl.km);
+    if(state === 'flight' && tau >= f.T) land(f.tj + f.T);
+    if(state === 'flight'){
+      const s = tau / f.T, spd = flSpeed(f, s);
+      fl.km = flKm(f, s);
+      fl.vkm = Math.max(0.25, spd * 0.8);
+      fl.tex += (spd / fl.vkm) * W * dt;
+      const altN = Math.pow(Math.sin(Math.PI * clamp(s, 0, 1)), 0.7);
+      fl.space = altN * clamp((Math.log10(f.D) - 2.7) / 1.6, 0, 1);
+      const y0 = groundAt(SKX()) - flAltPx(f, s), y1 = groundAt(SKX()) - flAltPx(f, (tau + 0.02) / f.T);
+      const vxPx = (spd / fl.vkm) * W;
+      const traj = clamp(Math.atan2((y1 - y0) / 0.02, vxPx), -0.75, 0.9);
+      let P;
+      if(tau < 0.12) P = lerpPose(POSES.tuck, POSES.ext, ss(tau / 0.12));
+      else if(tau < 0.6) P = lerpPose(POSES.ext, POSES.flight, ss((tau - 0.12) / 0.48));
+      else P = POSES.flight;
+      const wl = ss((tau - (f.T - 0.5)) / 0.5);
+      if(wl > 0) P = lerpPose(P, POSES.land, wl);
+      const ang = lerp(traj - 12 * DEG * ss(tau / 0.4), 0, wl);
+      sk = { sx: SKX(), sy: y0, a: ang, P, vspread: ss((tau - 0.2) / 0.4) * (1 - wl), v: spd * 1000, scale: 1 };
+      liveKm = fl.km; liveKmh = spd * 3600;
+      windV = Math.min(200, 60 + Math.log10(1 + spd) * 40);
+      if(f.perfect){ for(let i = 0; i < 2; i++) sparkle(SKX() - 20, y0 - 20); }
+      const r = regionAt(fl.km);
+      regionLabel = `${r[2]} 上空`;
+      if(fl.lastRegion && fl.lastRegion !== r[2] && spd < 1500) SFX.pass();
+      fl.lastRegion = r[2];
+    } else if(state === 'landed'){
+      const L = run.land, tl = t - L.t, v0 = L.v, dec = v0 / 1.4, tt = Math.min(tl, v0 / dec);
+      fl.km = f.D + v0 * tt - 0.5 * dec * tt * tt;
+      fl.vkm = 0.25;
+      fl.tex += ((v0 - dec * tt) / fl.vkm) * W * dt;
+      fl.space = 0;
+      const gy = groundAt(SKX());
+      let P = tl < 0.5 ? POSES.land : lerpPose(POSES.land, run.world ? POSES.banzai : POSES.stand, ss((tl - 0.5) / 0.7));
+      let sy = gy;
+      if(L.water){ sy = gy + Math.min(1, tl * 1.5) * SK * 0.9 + Math.sin(tl * 5) * 3; }
+      sk = { sx: SKX(), sy, a: 0, P, vspread: 0, v: 0, scale: 1 };
+      liveKmh = (v0 - dec * tt) * 3600;
+      regionLabel = '📍 ' + run.place;
+      if(run.world && tl > 0.8 && Math.random() < dt * 4) launchFirework();
+      if(run.world){ if(tl > 1.8 && !run.next){ run.next = true; startRun(performance.now(), true); } }
+      else if(tl > (L.water ? 1.7 : 1.5) && !run.resultShown) showResult();
+    }
+  }
+  if(state === 'arrive'){
+    // 世界一周の最後：空から富士山の頂上へ舞い降り、止まらずにそのまま2周目の滑走へ
+    const A = run.arrive, t = (now - run.start) / 1000, tau = Math.min(0, t - A.t0 - ARR_T);
+    if(t - A.t0 >= ARR_T){ startRun(run.start + (A.t0 + ARR_T) * 1000, true); }
+    else {
+      const S = sampleIn(INRUN_LEN), dx = Math.cos(S.a), dy = Math.sin(S.a);
+      const u = tau / ARR_T;   // -1 → 0
+      const x = S.x + dx * ARR_V * tau, y = S.y + dy * ARR_V * tau - ARR_H * u * u;
+      const vy = dy * ARR_V - 2 * ARR_H * u / ARR_T;
+      // 最初は引きの画で富士山の頂上が見え、着地に向けて滑走中と同じ寄りの画へなめらかに寄っていく
+      const vmin = W < H ? 70 : 110, vwT = Math.max(vmin * 0.8, ARR_V * 0.1167 / SCREEN_SPEED);
+      const z = ss(1 + u);
+      const vw = vwT + (1.5 * Math.abs(x - S.x) + 1.6 * Math.abs(y - S.y) * W / H) * (1 - z * z);   // スキーヤーと頂上が両方入る広さ→着地で滑走中の寄りへ
+      PPM = W / vw;
+      // 着地点（頂上）とスキーヤーの両方が見えるように中間を映し、最後に滑走中と同じ追いかけ位置へ
+      const z2 = z * z;
+      const trX = x - (0.22 - 0.5) * vw, trY = y - (0.42 - 0.5) * H / PPM;
+      cam.x = lerp((x + S.x) / 2, trX, z2); cam.y = lerp((y + S.y) / 2, trY, z2);
+      const w = ss((u + 0.35) / 0.35);
+      const P = lerpPose(POSES.flight, POSES.tuck, w);
+      sk = { x, y, a: Math.atan2(vy, dx * ARR_V) - 10 * DEG * (1 - w), P, pivotHip: false, vspread: 1 - w, v: ARR_V, scale: lerp(0.6, 1, z) };
+      liveKm = lerp(A.km0, LOOP_KM, ss(1 + u)); liveKmh = ARR_V * 3.6;
+      windV = 120;
+    }
+  }
+  if(state === 'inrun' || state === 'fall' || state === 'title') liveKmh = sk.v * 3.6;
+
+  // sound
+  const sv = Math.min(slideV, 3000);
+  setLoop(slideG, slideF, slideV > 0.5 ? 0.04 + Math.log10(1 + sv) * 0.05 : 0, 500 + Math.log10(1 + sv) * 900);
+  setLoop(windG, windF, windV > 0 ? 0.03 + windV * 0.0011 : 0, 250 + windV * 6);
+
+  // particles
+  for(const p of particles){ p.life += dt; p.vy += G * 0.7 * dt * (p.g || 1); p.x += p.vx * dt; p.y += p.vy * dt; }
+  particles = particles.filter(p => p.life < p.max);
+  if(particles.length > 500) particles.splice(0, particles.length - 500);
+  for(const p of sparts){ p.life += dt; p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+  sparts = sparts.filter(p => p.life < p.max);
+  if(sparts.length > 700) sparts.splice(0, sparts.length - 700);
+  // speed lines
+  const fast = state === 'inrun' ? clamp((sk.v - 40) / 400, 0, 1) : (state === 'flight' || state === 'arrive') ? 1 : 0;
+  if(fast > 0){
+    const gold = !!(state === 'flight' && run.flight.perfect);
+    let n = (20 + 110 * fast) * dt;
+    while(n > 0){ if(Math.random() < n) speedLines.push({ x: W + 40, y: Math.random() * H, len: 50 + Math.random() * 140, v: 1400 + Math.random() * 900 * fast, gold }); n -= 1; }
+  }
+  const ma = state === 'inrun' ? sk.a : state === 'flight' ? sk.a * 0.5 : 0;
+  for(const l of speedLines){ l.x -= Math.cos(ma) * l.v * dt; l.y -= Math.sin(ma) * l.v * dt; l.ma = ma; }
+  speedLines = speedLines.filter(l => l.x > -250 && l.y > -250 && l.y < H + 250);
+  for(const c of confetti){ c.vy += 40 * dt; c.x += c.vx * dt; c.y += c.vy * dt; c.r += c.vr * dt; }
+  confetti = confetti.filter(c => c.y < H + 30);
+  shake *= Math.exp(-dt * 7); if(shake < 0.2) shake = 0;
+  flash *= Math.exp(-dt * 3.2); if(flash < 0.01) flash = 0;
+}
+function launchFirework(){
+  const x = W * (0.15 + Math.random() * 0.7), y = H * (0.12 + Math.random() * 0.3);
+  const cols = ['255,214,60', '239,68,68', '96,165,250', '74,222,128', '244,114,182'];
+  const c = cols[Math.floor(Math.random() * cols.length)];
+  for(let i = 0; i < 40; i++){ const a = Math.PI * 2 * i / 40, v = 120 + Math.random() * 80; sparts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 120, life: 0, max: 1 + Math.random() * .4, r: 2.5, c, kind: 'dot' }); }
+  tone({ type: 'sine', f0: 200 + Math.random() * 100, f1: 60, dur: .3, gain: .15 });
+}
+
+/* ================= 描画：富士山パート ================= */
+const wx = x => (x - cam.x) * PPM + W / 2;
+const wy = y => (y - cam.y) * PPM + H / 2;
+const toX = sx => cam.x + (sx - W / 2) / PPM;
+function wave(x, s){ return 0.55 * Math.sin(x / 170 + s) + 0.3 * Math.sin(x / 71 + 1.3 + s * 2) + 0.15 * Math.sin(x / 33 + 2.1 + s); }
+function hash(i){ const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+const CLOUDS = [{x:.12,y:.2,s:1.1},{x:.48,y:.12,s:.8},{x:.82,y:.26,s:1},{x:1.15,y:.16,s:.9}];
+function drawCloud(x, y, s, a){
+  ctx.fillStyle = `rgba(255,255,255,${a == null ? .95 : a})`; ctx.beginPath();
+  const r = 26 * s;
+  ctx.arc(x, y, r, 0, Math.PI * 2); ctx.arc(x + r * 1.1, y - r * .45, r * 1.25, 0, Math.PI * 2); ctx.arc(x + r * 2.4, y, r * 1.0, 0, Math.PI * 2);
+  ctx.rect(x, y - r * .2, r * 2.4, r * 1.2); ctx.fill();
+}
+function drawSky1(){
+  const hz = H * 0.66;
+  const g = ctx.createLinearGradient(0, 0, 0, hz);
+  g.addColorStop(0, '#2f8ff0'); g.addColorStop(1, '#bfe2ff');
+  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
+  const span = W + 300, off = cam.x * 0.01;
+  for(const c of CLOUDS){
+    const x = ((c.x * span - off) % span + span) % span - 150;
+    drawCloud(x, c.y * H * 0.9 + 10, c.s * Math.max(.7, Math.min(1.3, W / 900)));
+  }
+  const ranges = [{ par: .006, h: .16, s: 0, top: '#f4f8fd', bot: '#a9c4e6' }, { par: .012, h: .1, s: 3, top: '#ffffff', bot: '#86a9d6' }];
+  for(const r of ranges){
+    const o = cam.x * r.par * 10;
+    const gg = ctx.createLinearGradient(0, hz - H * r.h, 0, hz);
+    gg.addColorStop(0, r.top); gg.addColorStop(.45, r.top); gg.addColorStop(1, r.bot);
+    ctx.fillStyle = gg; ctx.beginPath(); ctx.moveTo(-10, hz + 5);
+    for(let sx = -10; sx <= W + 20; sx += 16){ const v = wave(sx + o, r.s); ctx.lineTo(sx, hz - H * r.h * (0.45 + 0.55 * Math.max(0, v + .2) / 1.2)); }
+    ctx.lineTo(W + 20, hz + 5); ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle = '#e9f2fc'; ctx.fillRect(-10, hz, W + 20, H);
+}
+function drawFuji(){
+  const step = 3;
+  const g = ctx.createLinearGradient(0, wy(SUMMIT.y), 0, wy(terrainY(0) + 400));
+  g.addColorStop(0, '#ffffff'); g.addColorStop(0.7, '#eef5fd'); g.addColorStop(1, '#d6e6f7');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-10, H + 20);
+  const pts = [];
+  for(let sx = -10; sx <= W + 10; sx += step){ const y = wy(terrainY(toX(sx))); pts.push([sx, y]); ctx.lineTo(sx, y); }
+  ctx.lineTo(W + 10, H + 20); ctx.closePath(); ctx.fill();
+  // ridges (gullies)
+  ctx.save(); ctx.clip();
+  ctx.strokeStyle = 'rgba(140,175,220,.28)'; ctx.lineWidth = 2;
+  const sp = 900 * PPM < 26 ? 26 / PPM : 900;
+  const x0 = Math.floor(toX(-20) / sp) * sp;
+  for(let x = x0; x < toX(W + 20); x += sp){
+    if(x > JP.x) continue;
+    const y = terrainY(x), L = (H * 0.25);
+    const X = wx(x), Y = wy(y);
+    ctx.beginPath(); ctx.moveTo(X, Y + 3); ctx.lineTo(X - L * 0.25, Y + L); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.strokeStyle = '#b8d2ef'; ctx.lineWidth = 2.5; ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
+  // forest on lower slopes
+  const ts = 40;
+  if(ts * PPM > 7){
+    const a = Math.floor(toX(-30) / ts), b = Math.ceil(toX(W + 30) / ts);
+    for(let i = a; i <= b; i++){
+      const x = i * ts + (hash(i) - .5) * ts * .6;
+      if(x < JP.x - 2500 || (x > JP.x - 40 && x < 40)) continue;
+      if(hash(i * 1.7) < 0.35) continue;
+      const y = terrainY(x), h = (10 + hash(i * 3.3) * 10) * PPM;
+      const X = wx(x), Y = wy(y) + 2;
+      if(X < -40 || X > W + 40) continue;
+      ctx.fillStyle = hash(i * 5.1) < .5 ? '#3d6c9e' : '#4a78aa';
+      ctx.beginPath(); ctx.moveTo(X - h * .35, Y); ctx.lineTo(X, Y - h); ctx.lineTo(X + h * .35, Y); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(X - h * .14, Y - h * .6); ctx.lineTo(X, Y - h); ctx.lineTo(X + h * .14, Y - h * .6); ctx.closePath(); ctx.fill();
+    }
+  }
+}
+function drawRamp(t){
+  const x0 = Math.max(JP.x, toX(-60)), x1 = Math.min(0, toX(W + 60));
+  // tower
+  if(x0 < x1){
+    const spc = 25;
+    const posts = [];
+    for(let x = -2; x >= JP.x; x -= spc) posts.push(x);
+    for(let i = 0; i < posts.length - 1; i++){
+      const a = posts[i], b = posts[i + 1];
+      if(a < x0 - spc || b > x1 + spc) continue;
+      const at = inrunYAtX(a) + 4, ab = terrainY(a), bt = inrunYAtX(b) + 4, bb = terrainY(b);
+      if(ab - at < 1 && bb - bt < 1) continue;
+      ctx.strokeStyle = '#a6afbe'; ctx.lineWidth = Math.max(1, 0.5 * PPM);
+      ctx.beginPath();
+      ctx.moveTo(wx(a), wy(at)); ctx.lineTo(wx(b), wy(Math.max(bt, lerp(bt, bb, .5))));
+      ctx.moveTo(wx(a), wy(lerp(at, ab, .5))); ctx.lineTo(wx(b), wy(bt));
+      ctx.moveTo(wx(a), wy(lerp(at, ab, .5))); ctx.lineTo(wx(b), wy(bb));
+      ctx.moveTo(wx(a), wy(ab)); ctx.lineTo(wx(b), wy(lerp(bt, bb, .5)));
+      ctx.stroke();
+    }
+    const w = Math.max(2, 1.6 * PPM);
+    for(const x of posts){
+      if(x < x0 - spc || x > x1 + spc) continue;
+      const top = inrunYAtX(x) + 4, bot = terrainY(x);
+      if(bot - top < 0.5) continue;
+      ctx.fillStyle = '#8c96a8'; ctx.fillRect(wx(x) - w / 2, wy(top), w, wy(bot) - wy(top));
+      ctx.fillStyle = '#b3bccb'; ctx.fillRect(wx(x) - w / 2, wy(top), w * .35, wy(bot) - wy(top));
+    }
+  }
+  // inrun deck (ramp part) + ski track along whole inrun
+  const sEnd = Math.min(INRUN.n, Math.round(960 / DSI));
+  const stepI = Math.max(1, Math.round(1.5 / (PPM * DSI)));
+  ctx.beginPath();
+  let first = true;
+  for(let i = 0; i <= sEnd; i += stepI){ const X = wx(INRUN.x[i]); if(X < -50 || X > W + 50) continue; const Y = wy(INRUN.y[i]); if(first){ ctx.moveTo(X, Y); first = false; } else ctx.lineTo(X, Y); }
+  for(let i = sEnd - (sEnd % stepI); i >= 0; i -= stepI){ const X = wx(INRUN.x[i]); if(X < -50 || X > W + 50) continue; ctx.lineTo(X, wy(INRUN.y[i] + 4)); }
+  ctx.closePath(); ctx.fillStyle = '#c3cad6'; ctx.fill(); ctx.strokeStyle = '#97a1b3'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(3, 1.2 * PPM); ctx.lineCap = 'round'; ctx.beginPath();
+  first = true;
+  for(let i = 0; i <= sEnd; i += stepI){ const X = wx(INRUN.x[i]); if(X < -50 || X > W + 50) continue; const Y = wy(INRUN.y[i]) + ctx.lineWidth * .3; if(first){ ctx.moveTo(X, Y); first = false; } else ctx.lineTo(X, Y); }
+  ctx.stroke();
+  // ski track groove along the whole mountain
+  ctx.strokeStyle = 'rgba(120,165,220,.55)'; ctx.lineWidth = 1.5; ctx.beginPath();
+  const stepT = Math.max(1, Math.round(2 / (PPM * DSI)));
+  first = true;
+  for(let i = 0; i <= INRUN.n; i += stepT){ const X = wx(INRUN.x[i]); if(X < -20 || X > W + 20) continue; const Y = wy(INRUN.y[i]) + 1.5; if(first){ ctx.moveTo(X, Y); first = false; } else ctx.lineTo(X, Y); }
+  ctx.stroke();
+  // course-side flags (spacing adapts to the current shot so they always read)
+  if(state !== 'title'){
+    const vwm = W / PPM, lv = Math.log10(vwm / 7), spc = Math.pow(10, Math.floor(lv)), fadeA = 1 - (lv - Math.floor(lv));
+    const xa = toX(-30), xb = Math.min(-2, toX(W + 30));
+    const fh = clamp(H * 0.05, 18, 40);
+    for(let x = Math.ceil(xa / spc) * spc; x <= xb; x += spc){
+      if(x < INRUN.x[INRUN.n]) continue;
+      const k = Math.round(x / spc), major = k % 10 === 0;
+      ctx.globalAlpha = major ? 1 : clamp(fadeA * 1.6, 0, 1);
+      if(ctx.globalAlpha < 0.03) continue;
+      const X = wx(x), Y = wy(inrunYAtX(x)) + 2;
+      ctx.strokeStyle = '#475569'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X, Y - fh); ctx.stroke();
+      ctx.fillStyle = k % 2 ? '#ef4444' : '#2563eb';
+      ctx.beginPath(); ctx.moveTo(X, Y - fh); ctx.lineTo(X + fh * .55, Y - fh * .82); ctx.lineTo(X, Y - fh * .62); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // summit gate
+  const gp = sampleIn(INRUN_LEN + 12), gx = wx(gp.x), gy = wy(gp.y);
+  const gs = Math.max(1, PPM * 1.2) * Math.max(1, 3 / Math.max(PPM, .01));
+  const gsz = clamp(PPM * 4, 10, 60);
+  ctx.fillStyle = '#334155'; ctx.fillRect(gx - gsz * .5, gy - gsz * 1.1, gsz * .9, gsz * .7);
+  ctx.fillStyle = '#ef4444'; ctx.fillRect(gx - gsz * .6, gy - gsz * 1.25, gsz * 1.1, gsz * .18);
+  ctx.fillStyle = '#64748b'; ctx.fillRect(gx - gsz * .05, gy - gsz * .45, gsz * .08, gsz * .45);
+  // takeoff point
+  const ex = wx(0), ey = wy(0), pw = Math.max(5, 0.5 * PPM);
+  const ph = Math.max(14, 5 * PPM);
+  ctx.fillStyle = '#ef4444'; ctx.fillRect(ex - pw, ey - ph * .35, pw, ph);
+  ctx.fillStyle = '#b91c1c'; ctx.fillRect(ex - pw * .35, ey - ph * .35, pw * .35, ph);
+  if(state === 'inrun' && !run.tapped && t > 0.8){
+    const pulse = (Math.sin(t * 14) + 1) / 2;
+    const yy = ey - ph * .35 - 18 - pulse * 6;
+    ctx.fillStyle = `rgba(239,68,68,${0.7 + pulse * 0.3})`;
+    ctx.beginPath(); ctx.moveTo(ex - pw / 2 - 11, yy); ctx.lineTo(ex - pw / 2 + 11, yy); ctx.lineTo(ex - pw / 2, yy + 14); ctx.closePath(); ctx.fill();
+    ctx.font = "800 12px Rubik, 'M PLUS Rounded 1c', sans-serif"; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText('踏切', ex - pw / 2, yy - 3); ctx.fillStyle = '#ef4444'; ctx.fillText('踏切', ex - pw / 2, yy - 3);
+  }
+}
+function drawParticles(){
+  for(const p of particles){
+    const a = 1 - p.life / p.max, X = wx(p.x), Y = wy(p.y);
+    if(X < -20 || X > W + 20 || Y < -20 || Y > H + 20) continue;
+    ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.strokeStyle = `rgba(150,190,232,${a * .7})`; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(X, Y, p.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+}
+function render1(now){
+  drawSky1();
+  drawFuji();
+  const t = run ? (now - run.start) / 1000 : 0;
+  drawRamp(t);
+  drawParticles();
+  drawSkier(wx(sk.x), wy(sk.y), sk.a, sk.P, { pivotHip: sk.pivotHip, vspread: sk.vspread, scale: sk.scale });
+}
+
+/* ================= 描画：世界一周フライト ================= */
+const STARS = Array.from({ length: 90 }, (_, i) => ({ x: hash(i * 2.3), y: hash(i * 7.9) * 0.7, r: 0.6 + hash(i * 4.1) * 1.4 }));
+function mixColor(a, b, t){ return `rgb(${Math.round(lerp(a[0], b[0], t))},${Math.round(lerp(a[1], b[1], t))},${Math.round(lerp(a[2], b[2], t))})`; }
+const TYPE_COL = { ocean: ['#3b8de0', '#1f5fae'], land: ['#86c96b', '#5a9a46'], desert: ['#ecc987', '#d4a65c'], snow: ['#f3f7fc', '#c9dbef'] };
+function drawLandmark(l, x, gy, u){
+  ctx.save(); ctx.translate(x, gy);
+  const t = l.t;
+  if(t === 'fuji'){
+    ctx.fillStyle = '#7d98c4'; ctx.beginPath(); ctx.moveTo(-3.2 * u, 0); ctx.quadraticCurveTo(-1 * u, -1.3 * u, -0.45 * u, -2.1 * u); ctx.lineTo(0.45 * u, -2.1 * u); ctx.quadraticCurveTo(1 * u, -1.3 * u, 3.2 * u, 0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(-1.05 * u, -1.35 * u); ctx.quadraticCurveTo(-0.7 * u, -1.75 * u, -0.45 * u, -2.1 * u); ctx.lineTo(0.45 * u, -2.1 * u); ctx.quadraticCurveTo(0.7 * u, -1.75 * u, 1.05 * u, -1.35 * u); ctx.lineTo(0.6 * u, -1.5 * u); ctx.lineTo(0.25 * u, -1.3 * u); ctx.lineTo(-0.15 * u, -1.5 * u); ctx.lineTo(-0.55 * u, -1.3 * u); ctx.closePath(); ctx.fill();
+  } else if(t === 'palm'){
+    ctx.fillStyle = '#e9d39b'; ctx.beginPath(); ctx.ellipse(0, 0, 1.4 * u, 0.35 * u, 0, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#4f8f3a'; ctx.beginPath(); ctx.ellipse(0.5 * u, -0.1 * u, 0.9 * u, 0.5 * u, 0, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle = '#8b5e34'; ctx.lineWidth = 0.09 * u; ctx.beginPath(); ctx.moveTo(-0.3 * u, -0.2 * u); ctx.quadraticCurveTo(-0.2 * u, -0.8 * u, 0, -1.2 * u); ctx.stroke();
+    ctx.strokeStyle = '#2f7d32'; ctx.lineWidth = 0.12 * u;
+    for(const a of [-160, -120, -60, -20]){ ctx.beginPath(); ctx.moveTo(0, -1.2 * u); ctx.quadraticCurveTo(Math.cos(a * DEG) * .5 * u, -1.35 * u, Math.cos(a * DEG) * .7 * u, -1.2 * u - Math.sin(a * DEG) * .35 * u); ctx.stroke(); }
+  } else if(t === 'city' || t === 'nyc'){
+    const tall = t === 'nyc' ? 1.9 : 0.9;
+    const bs = [[-1.4, .5], [-1.0, .8], [-.6, tall * .9], [-.2, tall], [.2, tall * .75], [.6, tall * 1.1], [1.0, .6], [1.35, .45]];
+    for(const [bx, bh] of bs){ ctx.fillStyle = '#64748b'; ctx.fillRect(bx * u, -bh * u, .36 * u, bh * u); ctx.fillStyle = 'rgba(255,255,255,.35)'; for(let wy2 = .15; wy2 < bh - .1; wy2 += .22) ctx.fillRect((bx + .08) * u, -(bh - wy2) * u, .2 * u, .07 * u); }
+    if(t === 'nyc'){ ctx.fillStyle = '#5eb39b'; ctx.fillRect(-2.25 * u, -.35 * u, .35 * u, .35 * u); ctx.fillRect(-2.15 * u, -.95 * u, .15 * u, .6 * u); ctx.beginPath(); ctx.arc(-2.07 * u, -1.0 * u, .1 * u, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(-2.0 * u, -1.35 * u, .05 * u, .4 * u); ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(-1.97 * u, -1.38 * u, .07 * u, 0, Math.PI * 2); ctx.fill(); }
+    else { ctx.strokeStyle = '#2f7d32'; ctx.lineWidth = .06 * u; for(const px of [-2, 1.9]){ ctx.beginPath(); ctx.moveTo(px * u, 0); ctx.lineTo(px * u, -1.1 * u); ctx.stroke(); ctx.beginPath(); ctx.arc(px * u, -1.1 * u, .2 * u, 0, Math.PI * 2); ctx.fillStyle = '#3f8f3a'; ctx.fill(); } }
+  } else if(t === 'mesa'){
+    ctx.fillStyle = '#c2613a'; ctx.beginPath(); ctx.moveTo(-2 * u, 0); ctx.lineTo(-1.6 * u, -.9 * u); ctx.lineTo(-.6 * u, -.9 * u); ctx.lineTo(-.4 * u, 0); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(.2 * u, 0); ctx.lineTo(.4 * u, -1.3 * u); ctx.lineTo(.8 * u, -1.3 * u); ctx.lineTo(1 * u, 0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#d9824f'; ctx.fillRect(-1.6 * u, -.9 * u, 1 * u, .12 * u); ctx.fillRect(.4 * u, -1.3 * u, .4 * u, .12 * u);
+  } else if(t === 'clock'){
+    ctx.fillStyle = '#b08b5a'; ctx.fillRect(-1.6 * u, -.6 * u, 1.4 * u, .6 * u); ctx.fillRect(-.2 * u, -1.7 * u, .5 * u, 1.7 * u);
+    ctx.beginPath(); ctx.moveTo(-.25 * u, -1.7 * u); ctx.lineTo(.05 * u, -2.3 * u); ctx.lineTo(.35 * u, -1.7 * u); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff7d6'; ctx.beginPath(); ctx.arc(.05 * u, -1.45 * u, .16 * u, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = .03 * u; ctx.beginPath(); ctx.moveTo(.05 * u, -1.45 * u); ctx.lineTo(.05 * u, -1.56 * u); ctx.moveTo(.05 * u, -1.45 * u); ctx.lineTo(.13 * u, -1.45 * u); ctx.stroke();
+  } else if(t === 'eiffel'){
+    ctx.fillStyle = '#7c5a3a'; ctx.beginPath(); ctx.moveTo(-.8 * u, 0); ctx.quadraticCurveTo(-.25 * u, -.9 * u, -.06 * u, -2.6 * u); ctx.lineTo(.06 * u, -2.6 * u); ctx.quadraticCurveTo(.25 * u, -.9 * u, .8 * u, 0); ctx.lineTo(.45 * u, 0); ctx.quadraticCurveTo(0, -.55 * u, -.45 * u, 0); ctx.closePath(); ctx.fill();
+    ctx.fillRect(-.45 * u, -.75 * u, .9 * u, .08 * u); ctx.fillRect(-.25 * u, -1.5 * u, .5 * u, .07 * u);
+  } else if(t === 'colos'){
+    ctx.fillStyle = '#d6b98a'; ctx.beginPath(); ctx.moveTo(-1.5 * u, 0); ctx.lineTo(-1.5 * u, -.8 * u); ctx.quadraticCurveTo(0, -1.1 * u, 1.5 * u, -.55 * u); ctx.lineTo(1.5 * u, 0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8a6d45';
+    for(let r = 0; r < 3; r++) for(let i = -6; i <= 6; i++){ const ax = i * .22 * u, ay = -(.12 + r * .25) * u; ctx.beginPath(); ctx.ellipse(ax, ay, .06 * u, .09 * u, 0, 0, Math.PI * 2); ctx.fill(); }
+  } else if(t === 'pyr'){
+    for(const [px, ph] of [[-1.2, 1.1], [.1, 1.5], [1.3, .8]]){ ctx.fillStyle = '#d8ae62'; ctx.beginPath(); ctx.moveTo((px - ph * .9) * u, 0); ctx.lineTo(px * u, -ph * u); ctx.lineTo((px + ph * .9) * u, 0); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#b98d45'; ctx.beginPath(); ctx.moveTo(px * u, -ph * u); ctx.lineTo((px + ph * .9) * u, 0); ctx.lineTo((px + ph * .2) * u, 0); ctx.closePath(); ctx.fill(); }
+  } else if(t === 'spire'){
+    ctx.fillStyle = '#94a3b8'; ctx.fillRect(-1.5 * u, -.5 * u, .4 * u, .5 * u); ctx.fillRect(.9 * u, -.7 * u, .4 * u, .7 * u);
+    ctx.fillStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(-.4 * u, 0); ctx.lineTo(-.25 * u, -1.2 * u); ctx.lineTo(-.12 * u, -2.2 * u); ctx.lineTo(-.03 * u, -3.4 * u); ctx.lineTo(.03 * u, -3.4 * u); ctx.lineTo(.12 * u, -2.2 * u); ctx.lineTo(.25 * u, -1.2 * u); ctx.lineTo(.4 * u, 0); ctx.closePath(); ctx.fill();
+  } else if(t === 'dome'){
+    ctx.fillStyle = '#f5efe6'; ctx.fillRect(-1 * u, -.6 * u, 2 * u, .6 * u);
+    ctx.beginPath(); ctx.ellipse(0, -.6 * u, .55 * u, .6 * u, 0, Math.PI, 0); ctx.fill(); ctx.fillRect(-.03 * u, -1.45 * u, .06 * u, .3 * u);
+    for(const mx of [-1.3, 1.3]){ ctx.fillRect((mx - .08) * u, -1.3 * u, .16 * u, 1.3 * u); ctx.beginPath(); ctx.arc(mx * u, -1.3 * u, .12 * u, Math.PI, 0); ctx.fill(); }
+  } else if(t === 'peak'){
+    ctx.fillStyle = '#8aa1c1'; ctx.beginPath(); ctx.moveTo(-2.6 * u, 0); ctx.lineTo(-1.4 * u, -1.5 * u); ctx.lineTo(-.8 * u, -1 * u); ctx.lineTo(0, -2.8 * u); ctx.lineTo(.9 * u, -1.4 * u); ctx.lineTo(1.5 * u, -1.9 * u); ctx.lineTo(2.6 * u, 0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(-.55 * u, -1.95 * u); ctx.lineTo(0, -2.8 * u); ctx.lineTo(.5 * u, -2 * u); ctx.lineTo(.2 * u, -2.1 * u); ctx.lineTo(-.1 * u, -1.9 * u); ctx.closePath(); ctx.fill();
+  } else if(t === 'pagoda'){
+    ctx.fillStyle = '#b91c1c'; ctx.fillRect(-.8 * u, -.5 * u, 1.6 * u, .5 * u);
+    for(let i = 0; i < 3; i++){ const w = (1.3 - i * .3) * u, y = -(.5 + i * .45) * u; ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.moveTo(-w, y); ctx.lineTo(w, y); ctx.lineTo(w * .7, y - .18 * u); ctx.lineTo(-w * .7, y - .18 * u); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#b91c1c'; ctx.fillRect(-w * .55, y - .45 * u, w * 1.1, .27 * u); }
+  } else if(t === 'tower'){
+    ctx.fillStyle = '#5a9a46'; ctx.beginPath(); ctx.ellipse(0, 0, 1.6 * u, .7 * u, 0, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#e2e8f0'; ctx.fillRect(-.06 * u, -2.2 * u, .12 * u, 1.6 * u); ctx.beginPath(); ctx.ellipse(0, -1.8 * u, .25 * u, .12 * u, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  if(l.n){
+    ctx.font = `800 ${Math.round(clamp(u * .22, 11, 16))}px 'M PLUS Rounded 1c', sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    const ly = -(t === 'spire' ? 3.5 : t === 'peak' ? 2.9 : t === 'eiffel' ? 2.7 : t === 'fuji' ? 2.25 : 2.0) * u - 6;
+    const tw = ctx.measureText(l.n).width + 14;
+    ctx.fillStyle = 'rgba(15,30,74,.85)'; roundRect(-tw / 2, ly - 20, tw, 22, 9); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText(l.n, 0, ly - 2);
+  }
+  ctx.restore();
+}
+function roundRect(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function render2(now){
+  const sp = fl.space;
+  const g = ctx.createLinearGradient(0, 0, 0, GY());
+  g.addColorStop(0, mixColor([47, 143, 240], [3, 7, 30], sp));
+  g.addColorStop(1, mixColor([191, 226, 255], [37, 70, 160], sp));
+  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
+  if(sp > 0.05){
+    for(const s of STARS){ ctx.fillStyle = `rgba(255,255,255,${sp * (0.5 + 0.5 * Math.sin(now / 300 + s.x * 40))})`; ctx.beginPath(); ctx.arc(((s.x * W - fl.tex * 0.02) % W + W) % W, s.y * H, s.r, 0, Math.PI * 2); ctx.fill(); }
+  }
+  // far clouds
+  const span = W + 300;
+  for(let i = 0; i < 5; i++){
+    const x = ((hash(i) * span - fl.tex * 0.15) % span + span) % span - 150;
+    drawCloud(x, H * (0.12 + hash(i * 3) * 0.3), 0.8 + hash(i * 5) * .6, 0.9 * (1 - sp));
+  }
+  // ground strips
+  const skx = SKX(), step = 4;
+  for(let sx = -4; sx <= W + 4; sx += step){
+    const km = fl.km + (sx - skx) / W * fl.vkm;
+    const type = regionAt(km)[3], cols = TYPE_COL[type];
+    const gy = groundAt(sx);
+    ctx.fillStyle = cols[1]; ctx.fillRect(sx, gy, step + 1, H - gy + 10);
+    ctx.fillStyle = cols[0]; ctx.fillRect(sx, gy, step + 1, 10);
+  }
+  // horizon haze
+  const hg = ctx.createLinearGradient(0, GY() - 30, 0, GY() + 4);
+  hg.addColorStop(0, 'rgba(255,255,255,0)'); hg.addColorStop(1, `rgba(255,255,255,${0.5 * (1 - sp)})`);
+  ctx.fillStyle = hg; ctx.fillRect(0, GY() - 30, W, 34);
+  // textures
+  for(const row of [{ sp: 54, y: 22, s: 1 }, { sp: 80, y: 60, s: 1.4 }, { sp: 120, y: 120, s: 2 }]){
+    const off = fl.tex * row.s * 0.6;
+    const i0 = Math.floor(off / row.sp) - 1, i1 = i0 + Math.ceil(W / row.sp) + 3;
+    for(let i = i0; i <= i1; i++){
+      const sx = i * row.sp - off + hash(i * row.s) * row.sp * .5;
+      if(sx < -30 || sx > W + 30) continue;
+      const km = fl.km + (sx - skx) / W * fl.vkm, type = regionAt(km)[3];
+      const y = groundAt(sx) + row.y * (H / 800);
+      if(y > H + 20) continue;
+      const z = row.s;
+      if(type === 'ocean'){ ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.5 * z; ctx.beginPath(); ctx.moveTo(sx - 8 * z, y); ctx.quadraticCurveTo(sx, y - 4 * z, sx + 8 * z, y); ctx.stroke(); }
+      else if(type === 'land'){ if(hash(i * 9.1 + z) < .3) continue; ctx.fillStyle = '#3f7f33'; const h = 9 * z; ctx.beginPath(); ctx.moveTo(sx - h * .4, y); ctx.lineTo(sx, y - h); ctx.lineTo(sx + h * .4, y); ctx.closePath(); ctx.fill(); }
+      else if(type === 'desert'){ ctx.strokeStyle = 'rgba(160,110,50,.45)'; ctx.lineWidth = 1.5 * z; ctx.beginPath(); ctx.moveTo(sx - 10 * z, y); ctx.quadraticCurveTo(sx, y - 5 * z, sx + 10 * z, y); ctx.stroke(); }
+      else { ctx.fillStyle = '#9fb7d6'; const h = 8 * z; ctx.beginPath(); ctx.moveTo(sx - h * .6, y); ctx.lineTo(sx, y - h); ctx.lineTo(sx + h * .6, y); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(sx - h * .25, y - h * .55); ctx.lineTo(sx, y - h); ctx.lineTo(sx + h * .25, y - h * .55); ctx.closePath(); ctx.fill(); }
+    }
+  }
+  // landmarks
+  const u = clamp(H * 0.075, 34, 70);
+  for(const l of LANDMARKS){
+    const sx = skx + (l.km - fl.km) / fl.vkm * W;
+    if(sx < -4 * u || sx > W + 4 * u) continue;
+    drawLandmark(l, sx, groundAt(sx) + 2, u);
+  }
+  // shadow
+  const gy = groundAt(skx), alt = gy - sk.sy;
+  if(state === 'flight' && alt > 4){ ctx.fillStyle = `rgba(15,30,74,${0.25 * clamp(1 - alt / (H * .6), 0, 1)})`; ctx.beginPath(); ctx.ellipse(skx, gy + 4, SK * 1.2 * clamp(1 - alt / H, .3, 1), 5, 0, 0, Math.PI * 2); ctx.fill(); }
+  // perfect glow
+  if(state === 'flight' && run.flight.perfect){
+    const gl = ctx.createRadialGradient(skx, sk.sy - SK, 0, skx, sk.sy - SK, SK * 2.6);
+    gl.addColorStop(0, 'rgba(255,230,120,.55)'); gl.addColorStop(1, 'rgba(255,230,120,0)');
+    ctx.fillStyle = gl; ctx.fillRect(skx - SK * 3, sk.sy - SK * 4, SK * 6, SK * 6);
+  }
+  drawSkier(skx, sk.sy, sk.a, sk.P, { vspread: sk.vspread });
+  // water overlay when landed in the sea
+  if(state === 'landed' && run.land.water){
+    ctx.fillStyle = 'rgba(31,95,174,.85)'; ctx.fillRect(skx - SK * 2.2, gy, SK * 4.4, H - gy);
+    ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(skx, gy + 2, SK * 1.6, 5, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  // screen particles
+  for(const p of sparts){
+    const a = 1 - p.life / p.max;
+    ctx.fillStyle = `rgba(${p.c},${a})`;
+    if(p.kind === 'star'){ const r = p.r * (0.6 + a * .6); ctx.beginPath(); ctx.moveTo(p.x, p.y - r * 1.6); ctx.lineTo(p.x + r * .5, p.y); ctx.lineTo(p.x, p.y + r * 1.6); ctx.lineTo(p.x - r * .5, p.y); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(p.x - r * 1.6, p.y); ctx.lineTo(p.x, p.y + r * .5); ctx.lineTo(p.x + r * 1.6, p.y); ctx.lineTo(p.x, p.y - r * .5); ctx.closePath(); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); }
+  }
+}
+function drawSpeedLines(){
+  ctx.lineCap = 'round';
+  for(const l of speedLines){
+    const ma = l.ma || 0;
+    ctx.strokeStyle = l.gold ? 'rgba(255,220,90,.6)' : 'rgba(255,255,255,.55)'; ctx.lineWidth = l.gold ? 3 : 2;
+    ctx.beginPath(); ctx.moveTo(l.x, l.y); ctx.lineTo(l.x + Math.cos(ma) * l.len, l.y + Math.sin(ma) * l.len); ctx.stroke();
+  }
+}
+function render(now){
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.save();
+  if(shake > 0) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+  if(state === 'flight' || state === 'landed') render2(now); else render1(now);
+  drawSpeedLines();
+  ctx.restore();
+  if(flash > 0){ ctx.fillStyle = `rgba(${flashColor},${flash})`; ctx.fillRect(0, 0, W, H); }
+  for(const c of confetti){ ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.r); ctx.fillStyle = c.c; ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h); ctx.restore(); }
+  // HUD
+  let dv, du;
+  const totKm = (run ? run.base : 0) + liveKm;
+  if(totKm < 1){ dv = fmt0(totKm * 1000); du = 'm'; } else { dv = fmt1(totKm); du = 'km'; }
+  const lapT = run && run.lap > 1 ? `${run.lap}周目` : '';
+  if($('lapVal').textContent !== lapT) $('lapVal').textContent = lapT;
+  if($('distVal').textContent !== dv) $('distVal').textContent = dv;
+  if($('distUnit').textContent !== du) $('distUnit').textContent = du;
+  const kmh = fmt0(Math.max(0, liveKmh));
+  if($('spdVal').textContent !== kmh) $('spdVal').textContent = kmh;
+  const gd = $('guide'), on = (state === 'inrun' && !run.tapped) || (state === 'title' && readyMode);
+  if(gd.classList.contains('on') !== on) gd.classList.toggle('on', on);
+  const gt = state === 'title' ? 'TAP TO START' : 'TAP TO JUMP';
+  if($('guideTxt').textContent !== gt) $('guideTxt').textContent = gt;
+  const rb = $('btnRestart'), rbOn = state !== 'title' && !(run && run.resultShown);
+  if(rb.classList.contains('hidden') === rbOn) rb.classList.toggle('hidden', !rbOn);
+  const rg = $('region'), ron = (state === 'flight' || state === 'landed') && !run.resultShown;
+  if(rg.classList.contains('on') !== ron) rg.classList.toggle('on', ron);
+  if(ron && $('regionTxt').textContent !== regionLabel) $('regionTxt').textContent = regionLabel;
+}
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
+  try{ update(now, dt); render(now); }catch(e){ console.error(e); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ================= 入力 ================= */
+cv.addEventListener('pointerdown', e => { e.preventDefault(); onTap(evTime(e)); }, { passive: false });
+document.addEventListener('keydown', e => {
+  if(e.repeat) return;
+  const tag = document.activeElement && document.activeElement.tagName;
+  if(tag === 'INPUT' || (tag === 'BUTTON' && (e.code === 'Enter' || e.code === 'Space'))) return;
+  if(e.code === 'KeyR' && state !== 'title' && !modalOpen){ e.preventDefault(); goReady(); return; }
+  if(e.code === 'Space' || e.code === 'Enter'){ e.preventDefault(); onTap(evTime(e)); }
+});
+document.addEventListener('pointerup', unlockAudio);
+document.addEventListener('touchend', unlockAudio, { passive: true });
+document.addEventListener('click', unlockAudio);
+$('btnSound').addEventListener('click', () => { unlockAudio(); setMuted(!muted); SFX.click(); });
+$('btnBgm').addEventListener('click', () => { unlockAudio(); setBgm(!bgmOn); });
+$('btnBgm').classList.toggle('off', !bgmOn);
+$('btnRank').addEventListener('click', () => { unlockAudio(); openModal('rankModal'); });
+$('bRank2').addEventListener('click', () => openModal('rankModal'));
+$('bRetry').addEventListener('click', () => { unlockAudio(); startRun(performance.now()); });
+$('btnRestart').addEventListener('click', () => { unlockAudio(); SFX.click(); goReady(); });
+$('bShare').addEventListener('click', shareResult);
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('pointerdown', e => { if(e.target === m) closeModal(m.id); }));
+function openModal(id){
+  modalOpen = true; $(id).classList.remove('hidden');
+  if(id === 'rankModal'){ $('nameIn').value = myName; renderRank(); }
+}
+function closeModal(id){ $(id).classList.add('hidden'); modalOpen = !!document.querySelector('.modal:not(.hidden)'); }
+$('nameSave').addEventListener('click', saveName);
+$('nameIn').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); saveName(); } });
+
+/* ================= 結果 ================= */
+function showResult(){
+  run.resultShown = true; run.resultAt = performance.now();
+  const miss = run.grade === 'MISS', perfect = run.grade === 'PERFECT';
+  const total = run.base + (miss ? 0 : run.dist);   // 周回ぶん＋最後のジャンプ
+  const laps = run.lap - 1;
+  run.total = total;
+  run.summary = (laps > 0 ? `地球${laps}周＋` : '') + (miss ? '富士山で転倒' : run.place);
+  const gEl = $('rGrade');
+  gEl.textContent = miss ? 'MISS' : perfect ? 'PERFECT!' : run.grade === 'GREAT' ? 'GREAT!' : 'GOOD';
+  gEl.className = 'grade ' + (miss ? 'miss' : run.grade.toLowerCase());
+  const dw = $('rDistWrap');
+  let isNew = false;
+  if(total <= 0){
+    dw.className = 'rdist none'; dw.textContent = '記録なし';
+  } else {
+    dw.className = 'rdist'; dw.innerHTML = '<span id="rDist"></span><small></small>';
+    const parts = fmtKm(total).split(' ');
+    $('rDist').textContent = parts[0]; dw.querySelector('small').textContent = ' ' + parts[1];
+    if(!best || total > best.d){ isNew = true; best = { d: total, g: run.grade, place: run.summary }; store.set('pt3_best', best); updateTitleBest(); }
+  }
+  $('rPlace').textContent = (miss ? '' : '📍 ') + run.summary;
+  $('rErr').textContent = miss ? (run.early ? `早すぎ（${Math.abs(Math.round(run.err))}ms 前）` : '踏切できず') : fmtErr(run.err);
+  $('rNew').classList.toggle('hidden', !isNew);
+  $('rBest').textContent = best ? fmtKm(best.d) : '--';
+  $('rNote').textContent = '';
+  updateResultRank();
+  hideJudge();
+  $('result').classList.remove('hidden');
+  if(laps > 0 || perfect){ launchConfetti(laps > 0 ? 220 : 140); SFX.fanfare(); }
+  else if(isNew) SFX.fanfare();
+  if(total > 0) submitScore({ distance: total, grade: run.grade, place: run.summary, err: miss ? null : Math.round(run.err) });
+}
+function shareText(){
+  const base = '0ms ジャンプ';
+  let line;
+  if(run && run.total > 0){
+    line = `富士山から合計 ${fmtKm(run.total)} 飛んだ！（${run.summary}）`;
+  } else if(best) line = `自己ベスト ${fmtKm(best.d)}（${best.place || best.g}）！`;
+  else line = '富士山から世界一周ジャンプに挑戦中！';
+  return { title: base, text: `🎿🗻 ${base}\n${line}\nキミは0msで押せる？ #0msジャンプ`, url: SHARE_URL };
+}
+async function shareResult(){
+  const s = shareText();
+  try{
+    if(navigator.share){ await navigator.share({ title: s.title, text: s.text, url: s.url }); return; }
+  }catch(e){ if(e && e.name === 'AbortError') return; }
+  $('shareText').textContent = s.text + '\n' + s.url;
+  $('lnkX').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(s.text) + '&url=' + encodeURIComponent(s.url);
+  $('lnkLine').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(s.url) + '&text=' + encodeURIComponent(s.text);
+  openModal('shareModal');
+}
+$('bCopy').addEventListener('click', async () => {
+  const txt = $('shareText').textContent;
+  try{ await navigator.clipboard.writeText(txt); toast('コピーしました'); }
+  catch(e){
+    try{ const r = document.createRange(); r.selectNodeContents($('shareText')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('テキストを選択しました。コピーしてください'); }catch(_){ toast('コピーできませんでした'); }
+  }
+});
+
+/* ================= 世界ランキング（共有データベース） ================= */
+const RANK_COL = 'world';
+let db = null, userCap = null, uid = null, rankDocs = [], rankState = 'loading', rankReady = false;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function validDoc(d){ return d && typeof d.distance === 'number' && isFinite(d.distance) && d.distance > 0 && d.distance < 1e9; }
+(async function initRank(){
+  try{
+    if(!window.claude || typeof window.claude.use !== 'function'){ rankState = 'off'; renderRank(); return; }
+    db = await window.claude.use('db');
+    userCap = await window.claude.use('user');
+    if(!db){ rankState = 'off'; renderRank(); return; }
+    try{ uid = userCap ? await userCap.id() : null; }catch(e){ uid = null; }
+    const timer = setTimeout(() => { if(!rankReady){ rankState = 'slow'; renderRank(); } }, 10000);
+    db.collection(RANK_COL).orderBy('distance', 'desc').limit(100).onSnapshot(snap => {
+      if(!snap.metadata.fromCache){ clearTimeout(timer); }
+      rankReady = true; rankState = 'ok';
+      rankDocs = snap.docs.map(d => ({ id: d.id, ...(d.data() || {}) })).filter(validDoc);
+      renderRank(); updateResultRank();
+    }, err => { clearTimeout(timer); rankState = (err && err.code === 'revoked') ? 'off' : 'error'; renderRank(); });
+  }catch(e){ rankState = 'off'; renderRank(); }
+})();
+function myRank(){ if(!uid) return null; const i = rankDocs.findIndex(d => d.id === uid); return i >= 0 ? i + 1 : null; }
+function updateResultRank(){
+  const r = myRank();
+  $('rRank').textContent = r ? `${r} 位` : (rankState === 'ok' && uid && best ? '100位圏外' : '--');
+}
+function renderRank(){
+  const st = $('rankStatus'), list = $('rankList');
+  const msgs = {
+    loading: 'ランキングを読み込み中…',
+    slow: 'ランキングに接続できません。しばらくしてから開き直してください。',
+    error: 'ランキングを読み込めませんでした。',
+    off: 'このページの表示環境ではオンラインランキングに接続できません。'
+  };
+  if(rankState !== 'ok'){ st.textContent = msgs[rankState] || ''; if(rankState !== 'slow') list.innerHTML = ''; }
+  else st.textContent = rankDocs.length ? `上位 ${Math.min(100, rankDocs.length)} 件・記録を更新すると自動で反映されます` : 'まだ記録がありません。最初の記録をつくろう！';
+  if(rankState !== 'ok' && rankState !== 'slow') return;
+  list.innerHTML = '';
+  rankDocs.forEach((d, i) => {
+    const li = document.createElement('li'); if(d.id === uid) li.className = 'me';
+    const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i + 1;
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = String(d.name || 'PLAYER').slice(0, 12);
+    const g = String(d.grade || '');
+    const gd = document.createElement('span'); gd.className = 'gd ' + (['PERFECT', 'GREAT', 'GOOD'].includes(g) ? g : ''); gd.textContent = ['PERFECT', 'GREAT', 'GOOD'].includes(g) ? g : '-';
+    const ds = document.createElement('span'); ds.className = 'ds'; ds.textContent = fmtKm(d.distance);
+    li.append(rk, nm, gd, ds);
+    if(d.place){ const pl = document.createElement('span'); pl.className = 'pl'; pl.textContent = '📍 ' + String(d.place).slice(0, 40); li.appendChild(pl); }
+    list.appendChild(li);
+  });
+}
+async function dbTry(fn){
+  try{ return await fn(); }
+  catch(e){ if(e && e.code === 'unavailable'){ await sleep(300 + Math.random() * 500); return await fn(); } throw e; }
+}
+let submitting = false;
+async function submitScore(rec){
+  const note = $('rNote');
+  if(!db || !uid){ note.textContent = rankState === 'off' ? '' : 'ランキングに接続中のため、今回の記録は登録されませんでした'; return; }
+  if(submitting) return; submitting = true;
+  try{
+    const ref = db.doc(RANK_COL + '/' + uid);
+    const cur = await dbTry(() => ref.get());
+    const prev = cur.exists ? cur.data() : null;
+    if(prev && validDoc(prev) && prev.distance >= rec.distance){
+      if(prev.name !== myName) await dbTry(() => ref.update({ name: myName }));
+      note.textContent = `ランキング登録中の記録：${fmtKm(prev.distance)}`;
+    } else {
+      await dbTry(() => ref.set({ name: myName, distance: rec.distance, grade: rec.grade, place: rec.place, err: rec.err, ts: Date.now() }));
+      note.textContent = '🌍 世界ランキングに反映しました！';
+    }
+  }catch(e){
+    note.textContent = (e && e.code === 'invalid_argument') ? '閲覧のみの権限のため、ランキングには登録できません' : 'ランキングへの登録に失敗しました';
+  }finally{ submitting = false; }
+}
+async function saveName(){
+  const v = $('nameIn').value.trim().slice(0, 12);
+  if(!v){ toast('名前を入力してください'); return; }
+  myName = v; store.set('pt_name', v); toast('名前を保存しました');
+  if(db && uid){
+    try{
+      const ref = db.doc(RANK_COL + '/' + uid); const cur = await ref.get();
+      if(cur.exists && cur.data().name !== v) await ref.update({ name: v });
+    }catch(e){}
+  }
+}
+
+// 自分のサイトで公開したとき：Claudeのランキング機能は使えないので、ランキングの表示を隠す
+(function hideRankingIfStandalone(){
+  if(window.claude && typeof window.claude.use === 'function') return;
+  const css = document.createElement('style');
+  css.textContent = '#btnRank,#bRank2,.rows div:nth-child(3){display:none!important}';
+  document.head.appendChild(css);
+})();
+</script>
+</body>
+</html>
