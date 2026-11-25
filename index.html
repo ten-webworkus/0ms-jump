@@ -207,7 +207,7 @@ const T_MIN = 3.0, T_MAX = 5.5;   // 助走時間は毎回この範囲でラン�
 let T0 = T_BASE;
 const SPD_MIN = 0.6, SPD_MAX = 1.8;   // 滑走中に画面内で人・景色が動く速さの倍率（毎回この範囲でランダム）
 let SCREEN_SPEED = 1;           // 今回の滑走開始から踏切ポイント到達までの秒数
-const WORLD_MS = 0.5;      // 世界一周は表示が「0ms」になるときだけ（誤差0.5ms未満）
+const WORLD_MS = 3;        // 誤差±3ms以内は「0ms」扱いで世界一周
 const PERFECT_MS = 20;     // PERFECT 許容誤差 ±ms
 const GREAT_MS = 70;       // GREAT 許容誤差 ±ms
 const EARLY_MS = 400;      // これより早いタップは「早すぎ」
@@ -399,7 +399,7 @@ function phase1View(dist){
 const logLerp = (a, b, u) => Math.exp(lerp(Math.log(a), Math.log(b), clamp(u, 0, 1)));
 function judge(errMs){
   const a = Math.abs(errMs); let d, g, world = false;
-  if(a < WORLD_MS){ g = 'PERFECT'; d = LOOP_KM; world = true; }
+  if(a <= WORLD_MS){ g = 'PERFECT'; d = LOOP_KM; world = true; }
   else if(a <= PERFECT_MS){ g = 'PERFECT'; d = logLerp(32700, 14200, (a - WORLD_MS) / (PERFECT_MS - WORLD_MS)); }
   else if(a <= GREAT_MS){ g = 'GREAT'; d = logLerp(13000, 3000, (a - PERFECT_MS) / (GREAT_MS - PERFECT_MS)); }
   else { g = 'GOOD'; const lim = errMs < 0 ? EARLY_MS : LATE_MS; d = logLerp(2500, 15, Math.pow((a - GREAT_MS) / (lim - GREAT_MS), 0.9)); }
@@ -705,7 +705,8 @@ function tryJump(ts){
 }
 function doJump(tt, err){
   const j = judge(err);
-  run.jumped = true; run.err = err; run.grade = j.grade; run.dist = j.dist; run.world = j.world;
+  run.jumped = true; run.err = j.world ? 0 : err; run.grade = j.grade; run.dist = j.dist; run.world = j.world;
+  if(j.world) err = 0;
   const D = j.dist;
   const T = 2.2 + 2.6 * Math.log10(1 + D / 10);
   const wEnd = Math.min(0.5, 0.35 * T / D);
